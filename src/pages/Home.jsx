@@ -25,7 +25,7 @@ const Home = () => {
     const [selectedDivisi, setSelectedDivisi] = useState('');
     const [selectedType, setSelectedType] = useState('');
 
-    const fetchInitialData = async () => {
+    const fetchInitialData = React.useCallback(async () => {
         setLoading(true);
 
         // Ambil Arsip berdasarkan Role
@@ -48,15 +48,19 @@ const Home = () => {
         if (divResult.success) setDivisions(divResult.data);
 
         setLoading(false);
-    };
+    }, [getArchives, getArchivesByDivision, getDocuments, getUserDivision, isAdmin]);
 
     useEffect(() => {
-        fetchInitialData();
+        const initFetch = async () => {
+            await Promise.resolve();
+            fetchInitialData();
+        };
+        initFetch();
 
         // Auto reload saat window dapet focus lagi (misal abis dari tab lain)
         window.addEventListener('focus', fetchInitialData);
         return () => window.removeEventListener('focus', fetchInitialData);
-    }, [location.pathname]); // Re-fetch tiap pindah halaman
+    }, [location.pathname, fetchInitialData]); // Re-fetch tiap pindah halaman
 
     const filteredArchives = archives.filter(item => {
         const matchesSearch = (item.judul?.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -62,7 +62,7 @@ const DocumentMetadataForm = ({ file, onProgress }) => {
             }
         };
         fetchData();
-    }, []);
+    }, [getDocuments, isAdmin, getUserDivision]);
 
     // Handle perubahan input
     const handleChange = (e) => {

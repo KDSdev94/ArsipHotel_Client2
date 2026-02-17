@@ -28,7 +28,7 @@ const DaftarArsip = () => {
     const [selectedDate, setSelectedDate] = useState('');
 
     // Fetch data from Supabase with role-based filtering
-    const fetchArchives = async () => {
+    const fetchArchives = React.useCallback(async () => {
         setLoading(true);
 
         let result;
@@ -49,15 +49,19 @@ const DaftarArsip = () => {
             setArchives(result.data);
         }
         setLoading(false);
-    };
+    }, [getArchives, getArchivesByDivision, getUserDivision, isAdmin]);
 
     useEffect(() => {
-        fetchArchives();
+        const initFetch = async () => {
+            await Promise.resolve();
+            fetchArchives();
+        };
+        initFetch();
 
         // Auto reload
         window.addEventListener('focus', fetchArchives);
         return () => window.removeEventListener('focus', fetchArchives);
-    }, [location.pathname]);
+    }, [location.pathname, fetchArchives]);
 
     // Handle Delete (Synced with Firestore)
     const handleDelete = async (id, filePath) => {

@@ -12,7 +12,7 @@ const HeaderAtas = ({ title, showBack = false, onMenuClick }) => {
     const dropdownRef = useRef(null);
 
     const userName = userProfile?.name || currentUser?.displayName || 'User';
-    const userRole = userProfile?.role || 'User';
+    // const userRole = userProfile?.role || 'User';
 
     // Menutup dropdown saat klik di luar
     useEffect(() => {

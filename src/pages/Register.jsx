@@ -31,7 +31,7 @@ const Register = () => {
             }
         };
         fetchDivisions();
-    }, []);
+    }, [getDocuments]);
 
     // Handle perubahan input
     const handleChange = (e) => {

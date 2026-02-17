@@ -26,7 +26,7 @@ const PreviewArsip = () => {
             setLoading(false);
         };
         fetchArsip();
-    }, [id]);
+    }, [id, getArchives]);
 
     const handleDelete = async () => {
         if (window.confirm("Apakah Anda yakin ingin menghapus arsip ini?")) {

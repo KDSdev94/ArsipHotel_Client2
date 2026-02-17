@@ -15,7 +15,7 @@ const Users = () => {
     // ============================================
     // STATE MANAGEMENT
     // ============================================
-    const { subscribeToCollection, addDocument, updateDocument, deleteDocument, getDocuments, setDocument } = useFirestore();
+    const { subscribeToCollection, updateDocument, deleteDocument, getDocuments, setDocument } = useFirestore();
     const { signUpByAdmin } = useAuth();
 
     const [users, setUsers] = useState([]);
@@ -56,7 +56,7 @@ const Users = () => {
         return () => {
             if (unsubscribe) unsubscribe();
         };
-    }, []);
+    }, [getDocuments, subscribeToCollection]);
 
     // ============================================
     // FUNGSI AKSI (CRUD)
@@ -89,7 +89,7 @@ const Users = () => {
 
         if (isEditing) {
             // Update cuma dokumen di Firestore
-            const { password, ...updateData } = formData;
+            const { password: _password, ...updateData } = formData;
             const result = await updateDocument('users', currentId, updateData);
             if (result.success) alert('Data pengguna berhasil diperbarui!');
             else alert('Gagal memperbarui: ' + result.error);
@@ -109,7 +109,7 @@ const Users = () => {
             }
 
             // 3. Simpan profil lengkap ke Firestore pake UID dari Auth
-            const { password, ...firestoreData } = formData;
+            const { password: _password, ...firestoreData } = formData;
             const result = await setDocument('users', authRes.uid, {
                 ...firestoreData,
                 uid: authRes.uid,

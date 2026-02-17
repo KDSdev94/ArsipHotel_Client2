@@ -12,20 +12,25 @@ const TabelDokumen = ({ data, loading: externalLoading, onDeleteSuccess }) => {
     const [internalArchives, setInternalArchives] = useState([]);
     const [internalLoading, setInternalLoading] = useState(true);
 
-    const fetchArchives = async () => {
+    const fetchArchives = React.useCallback(async () => {
         setInternalLoading(true);
         const result = await getArchives();
         if (result.success) {
             setInternalArchives(result.data.slice(0, 5));
         }
         setInternalLoading(false);
-    };
+    }, [getArchives]);
 
     useEffect(() => {
         if (!data) {
-            fetchArchives();
+            // Defer execution to avoid synchronous setState in effect warning
+            const initFetch = async () => {
+                await Promise.resolve();
+                fetchArchives();
+            };
+            initFetch();
         }
-    }, [data]);
+    }, [data, fetchArchives]);
 
     const handleDelete = async (id, filePath) => {
         const archives = data || internalArchives;

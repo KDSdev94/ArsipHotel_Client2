@@ -23,23 +23,27 @@ const Divisi = () => {
         userCount: 0 // Default 0 anggota
     });
 
-    const fetchData = async () => {
+    const fetchData = React.useCallback(async () => {
         // Ambil data user untuk menghitung anggota riil per divisi
         const userResult = await getDocuments('users');
         if (userResult.success) {
             setUsers(userResult.data);
         }
-    };
+    }, [getDocuments]);
 
     // ---- AMBIL DATA REAL-TIME ----
     useEffect(() => {
+        const initFetch = async () => {
+            await Promise.resolve();
+            fetchData();
+        };
+        initFetch();
+
         // Nama koleksi diganti jadi 'divisions'
         const unsubscribe = subscribeToCollection('divisions', (data) => {
             setDivisions(data);
             setLoading(false);
         });
-
-        fetchData();
 
         // Auto Refresh
         window.addEventListener('focus', fetchData);
@@ -48,7 +52,7 @@ const Divisi = () => {
             if (unsubscribe) unsubscribe();
             window.removeEventListener('focus', fetchData);
         };
-    }, [location.pathname]);
+    }, [location.pathname, fetchData, subscribeToCollection]);
 
     // Gabungkan data divisi dengan hitungan riil anggota
     const divisionsWithRealCount = useMemo(() => {

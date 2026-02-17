@@ -28,6 +28,7 @@ const AuthContext = createContext();
 // ============================================
 // Hook ini buat akses AuthContext dengan mudah
 // Tinggal panggil: const { user, login, logout } = useAuth();
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) {
@@ -101,7 +102,7 @@ export const AuthProvider = ({ children }) => {
         try {
             await signOut(auth);
             return { success: true };
-        } catch (error) {
+        } catch {
             return { success: false, error: 'Gagal logout' };
         }
     };

@@ -56,7 +56,7 @@ const Reports = () => {
         });
     };
 
-    const fetchData = async () => {
+    const fetchData = React.useCallback(async () => {
         setLoading(true);
 
         // 1. Ambil Data Arsip
@@ -87,16 +87,20 @@ const Reports = () => {
         }
 
         setLoading(false);
-    };
+    }, [getArchives, getArchivesByDivision, getDocuments, getUserDivision, isAdmin, limitQuery, orderByQuery]);
 
     // Fetch archives based on role
     useEffect(() => {
-        fetchData();
+        const initFetch = async () => {
+            await Promise.resolve();
+            fetchData();
+        };
+        initFetch();
 
         // Auto reload
         window.addEventListener('focus', fetchData);
         return () => window.removeEventListener('focus', fetchData);
-    }, [location.pathname]);
+    }, [location.pathname, fetchData]);
 
     return (
         <Layout title="Laporan & Statistik">

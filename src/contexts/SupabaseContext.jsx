@@ -3,6 +3,7 @@ import { supabase } from '../supabase/config';
 
 const SupabaseContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSupabase = () => {
     const context = useContext(SupabaseContext);
     if (!context) {
@@ -20,7 +21,7 @@ export const SupabaseProvider = ({ children }) => {
             const fileName = `${Date.now()}_${cleanFileName}`;
             const filePath = `${path}/${fileName}`;
 
-            const { data, error } = await supabase.storage
+            const { error } = await supabase.storage
                 .from('archives')
                 .upload(filePath, file, {
                     onUploadProgress: (progress) => {
@@ -119,7 +120,7 @@ export const SupabaseProvider = ({ children }) => {
     const deleteArchive = async (id, filePath = null) => {
         try {
             // 1. Hapus record dari Database dan minta data yang dihapus balik
-            const { data, error, count } = await supabase
+            const { data, error } = await supabase
                 .from('archives')
                 .delete()
                 .eq('id', id)

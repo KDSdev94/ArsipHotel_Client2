@@ -31,6 +31,7 @@ const FirestoreContext = createContext();
 // ============================================
 // CUSTOM HOOK - useFirestore
 // ============================================
+// eslint-disable-next-line react-refresh/only-export-components
 export const useFirestore = () => {
     const context = useContext(FirestoreContext);
     if (!context) {

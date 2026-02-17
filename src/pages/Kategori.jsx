@@ -30,25 +30,26 @@ const Kategori = () => {
         count: 0
     });
 
-    const fetchData = async () => {
+    const fetchData = React.useCallback(async () => {
         // Ambil data arsip buat ngitung jumlah rill per kategori
         const arcResult = await getArchives();
         if (arcResult.success) {
             setArchives(arcResult.data);
         }
-    };
+    }, [getArchives]);
 
-    // ============================================
-    // AMBIL DATA REAL-TIME
-    // ============================================
     useEffect(() => {
+        const initFetch = async () => {
+            await Promise.resolve();
+            fetchData();
+        };
+        initFetch();
+
         // Ambil data kategori secara real-time dari koleksi 'categories'
         const unsubscribe = subscribeToCollection('categories', (data) => {
             setCategories(data);
             setLoading(false);
         });
-
-        fetchData();
 
         // Auto Refresh
         window.addEventListener('focus', fetchData);
@@ -58,7 +59,7 @@ const Kategori = () => {
             if (unsubscribe) unsubscribe();
             window.removeEventListener('focus', fetchData);
         };
-    }, []);
+    }, [fetchData, subscribeToCollection]);
 
     // Gabungkan data kategori dengan hitungan rill dari archives
     const categoriesWithCount = useMemo(() => {

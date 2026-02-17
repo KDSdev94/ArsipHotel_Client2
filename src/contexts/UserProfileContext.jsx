@@ -10,6 +10,7 @@ import { useFirestore } from './FirestoreContext';
 
 const UserProfileContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useUserProfile = () => {
     const context = useContext(UserProfileContext);
     if (!context) {
@@ -55,7 +56,7 @@ export const UserProfileProvider = ({ children }) => {
         };
 
         fetchUserProfile();
-    }, [currentUser]);
+    }, [currentUser, getDocument]);
 
     // ============================================
     // HELPER FUNCTIONS

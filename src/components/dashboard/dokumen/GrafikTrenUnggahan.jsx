@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 
 const GrafikTrenUnggahan = ({ archives = [] }) => {
-    const { chartData, months, maxCount } = useMemo(() => {
+    const { chartData, months } = useMemo(() => {
         const now = new Date();
         const last6Months = [];
 
@@ -44,8 +44,7 @@ const GrafikTrenUnggahan = ({ archives = [] }) => {
 
         return {
             chartData: { pathD, fillD, lastPoint: points[points.length - 1] },
-            months: last6Months.map(m => m.label),
-            maxCount: max
+            months: last6Months.map(m => m.label)
         };
     }, [archives]);
 

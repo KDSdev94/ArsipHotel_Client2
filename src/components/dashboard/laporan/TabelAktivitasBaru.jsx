@@ -63,7 +63,7 @@ const TabelAktivitasBaru = ({ activities: logs = [], onReload }) => {
                 setSelectedIds([]);
                 if (onReload) onReload();
                 alert('Data berhasil dihapus');
-            } catch (err) {
+            } catch {
                 alert('Gagal menghapus beberapa data');
             } finally {
                 setIsDeleting(false);
@@ -81,7 +81,7 @@ const TabelAktivitasBaru = ({ activities: logs = [], onReload }) => {
                 setSelectedIds([]);
                 if (onReload) onReload();
                 alert('Semua data berhasil dibersihkan');
-            } catch (err) {
+            } catch {
                 alert('Gagal membersihkan data');
             } finally {
                 setIsDeleting(false);
