@@ -146,7 +146,7 @@ const DocumentMetadataForm = ({ file, onProgress }) => {
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-gray-200 dark:border-gray-700 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-200 dark:border-gray-700 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center gap-3 mb-8 border-b border-gray-100 dark:border-gray-700 pb-4">
                 <span className="material-symbols-outlined text-primary">description</span>
                 <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Metadata Dokumen</h2>
@@ -239,9 +239,9 @@ const DocumentMetadataForm = ({ file, onProgress }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                         <label className="block text-[11px] font-black uppercase text-slate-500 tracking-widest" htmlFor="retensiAktif">Masa Retensi (Aktif)</label>
-                        <div className="flex gap-2">
+                        <div className="grid grid-cols-3 gap-2">
                             <input
-                                className="flex-1 rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary shadow-sm text-sm font-bold py-3 px-4"
+                                className="col-span-2 rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary shadow-sm text-sm font-bold py-3 px-4"
                                 id="retensiAktif"
                                 placeholder="Durasi"
                                 type="number"
@@ -249,7 +249,7 @@ const DocumentMetadataForm = ({ file, onProgress }) => {
                                 onChange={handleChange}
                             />
                             <select
-                                className="w-32 rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary shadow-sm text-sm font-bold py-3"
+                                className="col-span-1 rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary shadow-sm text-sm font-bold py-3 px-2"
                                 id="retensiAktifUnit"
                                 value={formData.retensiAktifUnit}
                                 onChange={handleChange}
@@ -262,9 +262,9 @@ const DocumentMetadataForm = ({ file, onProgress }) => {
                     </div>
                     <div className="space-y-2">
                         <label className="block text-[11px] font-black uppercase text-slate-500 tracking-widest" htmlFor="retensiInaktif">Masa Retensi (Inaktif)</label>
-                        <div className="flex gap-2">
+                        <div className="grid grid-cols-3 gap-2">
                             <input
-                                className="flex-1 rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary shadow-sm text-sm font-bold py-3 px-4"
+                                className="col-span-2 rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary shadow-sm text-sm font-bold py-3 px-4"
                                 id="retensiInaktif"
                                 placeholder="Durasi"
                                 type="number"
@@ -272,7 +272,7 @@ const DocumentMetadataForm = ({ file, onProgress }) => {
                                 onChange={handleChange}
                             />
                             <select
-                                className="w-32 rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary shadow-sm text-sm font-bold py-3"
+                                className="col-span-1 rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary shadow-sm text-sm font-bold py-3 px-2"
                                 id="retensiInaktifUnit"
                                 value={formData.retensiInaktifUnit}
                                 onChange={handleChange}

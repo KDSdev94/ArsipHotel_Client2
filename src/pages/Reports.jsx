@@ -139,9 +139,7 @@ const Reports = () => {
                     </div>
 
                     {/* Activity Table - Pass real logs */}
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-8 shadow-sm border border-gray-200 dark:border-gray-700">
-                        <TabelAktivitasBaru activities={activities} />
-                    </div>
+                    <TabelAktivitasBaru activities={activities} onReload={fetchData} />
                 </div>
             )}
         </Layout>

@@ -14,7 +14,7 @@ const UploadDocument = () => {
     };
 
     return (
-        <Layout title="Unggah Dokumen Baru" showBack={true}>
+        <Layout title="Unggah Dokumen Baru" showBack={false}>
             <div className="max-w-4xl mx-auto w-full">
                 <div className="mb-8 text-center sm:text-left">
                     <h1 className="text-[#111318] dark:text-white text-2xl md:text-3xl font-black leading-tight tracking-tight mb-2">

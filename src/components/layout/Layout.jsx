@@ -13,7 +13,7 @@ const Layout = ({ children, title, showBack, hideFAB = false }) => {
     };
 
     return (
-        <div className="flex h-screen overflow-hidden bg-white dark:bg-background-dark text-[#111318] dark:text-gray-100 font-display">
+        <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-background-dark text-[#111318] dark:text-gray-100 font-display">
             {/* Sidebar Desktop & Mobile */}
             <div className={`
                 fixed inset-0 z-100 lg:relative lg:z-0 lg:flex

@@ -192,14 +192,12 @@ const Users = () => {
                 ) : (
                     <div className="space-y-6">
                         <StatistikPengguna users={users} />
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-8 shadow-sm border border-gray-200 dark:border-gray-700">
-                            <TabelPengguna
-                                users={filteredUsers}
-                                totalCount={users.length}
-                                onEdit={handleOpenModal}
-                                onDelete={handleDelete}
-                            />
-                        </div>
+                        <TabelPengguna
+                            users={filteredUsers}
+                            totalCount={users.length}
+                            onEdit={handleOpenModal}
+                            onDelete={handleDelete}
+                        />
                     </div>
                 )}
             </div>
