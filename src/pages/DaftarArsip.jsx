@@ -198,7 +198,7 @@ const DaftarArsip = () => {
             {/* ========== TABEL ARSIP ========== */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[1000px]">
+                    <table className="w-full text-left border-collapse min-w-250">
 
                         {/* Table Header */}
                         <thead>

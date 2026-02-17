@@ -16,7 +16,7 @@ const Layout = ({ children, title, showBack, hideFAB = false }) => {
         <div className="flex h-screen overflow-hidden bg-white dark:bg-background-dark text-[#111318] dark:text-gray-100 font-display">
             {/* Sidebar Desktop & Mobile */}
             <div className={`
-                fixed inset-0 z-[100] lg:relative lg:z-0 lg:flex
+                fixed inset-0 z-100 lg:relative lg:z-0 lg:flex
                 ${isSidebarOpen ? 'flex' : 'hidden lg:flex'}
             `}>
                 {/* Overlay for mobile */}
@@ -26,7 +26,7 @@ const Layout = ({ children, title, showBack, hideFAB = false }) => {
                 ></div>
 
                 {/* Sidebar Content */}
-                <div className="relative z-[110] w-72 h-full bg-[#0f172a]">
+                <div className="relative z-110 w-72 h-full bg-[#0f172a]">
                     <NavigasiSamping />
                 </div>
             </div>
