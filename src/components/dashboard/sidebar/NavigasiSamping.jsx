@@ -68,7 +68,7 @@ const NavigasiSamping = () => {
     const isArsipActive = location.pathname === '/daftar-arsip' || location.pathname === '/upload';
 
     return (
-        <aside className="w-72 bg-[#0f172a] text-slate-300 flex flex-col shrink-0 h-screen overflow-hidden">
+        <aside className="w-full h-full bg-[#0f172a] text-slate-300 flex flex-col overflow-hidden">
 
             {/* ========== LOGO & NAMA APLIKASI ========== */}
             <div className="p-6 flex items-center gap-3 shrink-0">

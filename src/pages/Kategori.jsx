@@ -5,10 +5,9 @@
 // ============================================
 
 import React, { useState, useEffect, useMemo } from 'react';
-import NavigasiSamping from '../components/dashboard/sidebar/NavigasiSamping';
+import Layout from '../components/layout/Layout';
 import { useFirestore } from '../contexts/FirestoreContext';
 import { useSupabase } from '../contexts/SupabaseContext';
-import Footer from '../components/dashboard/umum/Footer';
 
 const Kategori = () => {
     // ============================================
@@ -136,106 +135,88 @@ const Kategori = () => {
     };
 
     return (
-        <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-200">
-            {/* Sidebar navigasi */}
-            <NavigasiSamping />
-
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col overflow-y-auto">
-                {/* ========== HEADER ========== */}
-                <header className="flex items-center justify-between sticky top-0 z-10 border-b border-slate-200 dark:border-gray-800 bg-white/80 backdrop-blur-md dark:bg-background-dark/80 px-8 py-4">
-                    <div className="flex items-center gap-4">
-                        <span className="text-slate-400 text-sm">Admin / Kategori</span>
+        <Layout title="Manajemen Kategori">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-8 shadow-sm border border-gray-200 dark:border-gray-700 min-h-150">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                    <div>
+                        <h1 className="text-slate-900 dark:text-white text-2xl font-bold mb-1">Manajemen Kategori Arsip</h1>
+                        <p className="text-slate-500 text-sm font-medium">Kelola label kategori untuk mempermudah pengarsipan dokumen.</p>
                     </div>
-                </header>
+                    {/* Tombol Tambah */}
+                    <button
+                        onClick={() => handleOpenModal()}
+                        className="flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-emerald-200 dark:shadow-none"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                        Tambah Kategori
+                    </button>
+                </div>
 
-                <main className="flex-1 p-8 w-full max-w-360 mx-auto">
-                    {/* ========== KOMPONEN TAHANAN (CONTENT CARD) ========== */}
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-gray-200 dark:border-gray-700 min-h-150">
-
-                        <div className="flex items-center justify-between mb-8">
-                            <div>
-                                <h1 className="text-slate-900 dark:text-white text-2xl font-bold mb-1">Manajemen Kategori Arsip</h1>
-                                <p className="text-slate-500 text-sm font-medium">Kelola label kategori untuk mempermudah pengarsipan dokumen.</p>
-                            </div>
-                            {/* Tombol Tambah */}
-                            <button
-                                onClick={() => handleOpenModal()}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-emerald-200 dark:shadow-none"
-                            >
-                                <span className="material-symbols-outlined text-[18px]">add_circle</span>
-                                Tambah Kategori
-                            </button>
-                        </div>
-
-                        {/* ========== TABEL KATEGORI ========== */}
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead>
-                                    <tr className="border-b-2 border-slate-100 dark:border-slate-700/50">
-                                        <th className="py-4 px-4 text-xs font-black uppercase text-slate-400 tracking-wider w-16 text-center">No</th>
-                                        <th className="py-4 px-4 text-xs font-black uppercase text-slate-400 tracking-wider">Nama Kategori</th>
-                                        <th className="py-4 px-4 text-xs font-black uppercase text-slate-400 tracking-wider">Deskripsi</th>
-                                        <th className="py-4 px-4 text-xs font-black uppercase text-slate-400 tracking-wider">Jumlah Arsip</th>
-                                        <th className="py-4 px-4 text-xs font-black uppercase text-slate-400 tracking-wider text-center">Aksi</th>
+                {/* ========== TABEL KATEGORI ========== */}
+                <div className="overflow-x-auto -mx-4 md:mx-0">
+                    <table className="w-full text-left min-w-[600px]">
+                        <thead>
+                            <tr className="border-b-2 border-slate-100 dark:border-slate-700/50">
+                                <th className="py-4 px-4 text-xs font-black uppercase text-slate-400 tracking-wider w-16 text-center">No</th>
+                                <th className="py-4 px-4 text-xs font-black uppercase text-slate-400 tracking-wider">Nama Kategori</th>
+                                <th className="py-4 px-4 text-xs font-black uppercase text-slate-400 tracking-wider">Deskripsi</th>
+                                <th className="py-4 px-4 text-xs font-black uppercase text-slate-400 tracking-wider">Jumlah Arsip</th>
+                                <th className="py-4 px-4 text-xs font-black uppercase text-slate-400 tracking-wider text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="5" className="py-20 text-center">
+                                        <div className="size-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div>
+                                    </td>
+                                </tr>
+                            ) : categoriesWithCount.length > 0 ? (
+                                categoriesWithCount.map((cat, index) => (
+                                    <tr key={cat.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-all">
+                                        <td className="py-5 px-4 text-sm font-bold text-slate-400 text-center">{index + 1}</td>
+                                        <td className="py-5 px-4">
+                                            <span className="text-slate-800 dark:text-white font-black text-sm uppercase tracking-tight">{cat.name}</span>
+                                        </td>
+                                        <td className="py-5 px-4">
+                                            <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs truncate">{cat.description || '-'}</p>
+                                        </td>
+                                        <td className="py-5 px-4">
+                                            <button className="text-primary hover:underline text-sm font-bold">
+                                                {cat.realCount || 0} Dokumen
+                                            </button>
+                                        </td>
+                                        <td className="py-5 px-4">
+                                            <div className="flex justify-center gap-3">
+                                                <button
+                                                    onClick={() => handleOpenModal(cat)}
+                                                    className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all"
+                                                >
+                                                    <span className="material-symbols-outlined text-[20px]">edit_square</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(cat.id)}
+                                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                >
+                                                    <span className="material-symbols-outlined text-[20px]">delete</span>
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
-                                    {loading ? (
-                                        <tr>
-                                            <td colSpan="5" className="py-20 text-center">
-                                                <div className="size-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div>
-                                            </td>
-                                        </tr>
-                                    ) : categoriesWithCount.length > 0 ? (
-                                        categoriesWithCount.map((cat, index) => (
-                                            <tr key={cat.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-all">
-                                                <td className="py-5 px-4 text-sm font-bold text-slate-400 text-center">{index + 1}</td>
-                                                <td className="py-5 px-4">
-                                                    <span className="text-slate-800 dark:text-white font-black text-sm uppercase tracking-tight">{cat.name}</span>
-                                                </td>
-                                                <td className="py-5 px-4">
-                                                    <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs truncate">{cat.description || '-'}</p>
-                                                </td>
-                                                <td className="py-5 px-4">
-                                                    <button className="text-primary hover:underline text-sm font-bold">
-                                                        {cat.realCount || 0} Dokumen
-                                                    </button>
-                                                </td>
-                                                <td className="py-5 px-4">
-                                                    <div className="flex justify-center gap-3">
-                                                        <button
-                                                            onClick={() => handleOpenModal(cat)}
-                                                            className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all"
-                                                        >
-                                                            <span className="material-symbols-outlined text-[20px]">edit_square</span>
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDelete(cat.id)}
-                                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                                        >
-                                                            <span className="material-symbols-outlined text-[20px]">delete</span>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan="5" className="py-20 text-center text-slate-400 italic">Belum ada kategori ditambahkan.</td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </main>
-                <Footer />
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="5" className="py-20 text-center text-slate-400 italic">Belum ada kategori ditambahkan.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* ========== MODAL FORM ========== */}
             {showModal && (
-                <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                <div className="fixed inset-0 z-110 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
                     <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
                         {/* Modal Header */}
                         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
@@ -279,7 +260,7 @@ const Kategori = () => {
                     </div>
                 </div>
             )}
-        </div>
+        </Layout>
     );
 };
 

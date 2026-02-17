@@ -9,6 +9,8 @@ import Footer from '../components/dashboard/umum/Footer';
 import { useFirestore } from '../contexts/FirestoreContext';
 import { useLocation } from 'react-router-dom';
 
+import Layout from '../components/layout/Layout';
+
 const Home = () => {
     const location = useLocation();
     const { getArchives, getArchivesByDivision } = useSupabase();
@@ -66,51 +68,41 @@ const Home = () => {
     });
 
     return (
-        <div className="flex h-screen overflow-hidden bg-white dark:bg-background-dark text-[#111318] dark:text-gray-100 font-display">
-            <NavigasiSamping />
-
-            <div className="flex-1 flex flex-col overflow-y-auto">
-                <HeaderAtas title="Pustaka Dokumen" />
-
-                <main className="flex-1 p-8">
-                    <div className="flex flex-wrap justify-between items-end gap-4 mb-8">
-                        <div className="flex flex-col gap-1">
-                            <h1 className="text-[#111318] dark:text-white text-3xl font-bold leading-tight tracking-tight">
-                                Beranda Arsip Digital
-                            </h1>
-                            <p className="text-[#616f89] dark:text-gray-400 text-base font-normal">
-                                {isAdmin()
-                                    ? 'Kelola, cari, dan atur semua aset arsip hotel dengan efisien.'
-                                    : `Pustaka dokumen digital khusus Divisi ${getUserDivision() || 'Anda'}.`
-                                }
-                            </p>
-                        </div>
-                    </div>
-
-                    <FilterPencarian
-                        searchTerm={searchTerm}
-                        setSearchTerm={setSearchTerm}
-                        selectedDivisi={selectedDivisi}
-                        setSelectedDivisi={setSelectedDivisi}
-                        selectedType={selectedType}
-                        setSelectedType={setSelectedType}
-                        divisions={divisions}
-                        totalResults={filteredArchives.length}
-                    />
-
-                    <TabelDokumen
-                        data={filteredArchives.slice(0, 10)}
-                        loading={loading}
-                        onDeleteSuccess={(deletedId) => {
-                            // Optimistic update: langsung hapus dari state biar cepet
-                            setArchives(prev => prev.filter(a => a.id !== deletedId));
-                        }}
-                    />
-                </main>
-
-                <Footer />
+        <Layout title="Pustaka Dokumen">
+            <div className="flex flex-wrap justify-between items-end gap-4 mb-8">
+                <div className="flex flex-col gap-1">
+                    <h1 className="text-[#111318] dark:text-white text-2xl md:text-3xl font-bold leading-tight tracking-tight">
+                        Beranda Arsip Digital
+                    </h1>
+                    <p className="text-[#616f89] dark:text-gray-400 text-sm md:text-base font-normal">
+                        {isAdmin()
+                            ? 'Kelola, cari, dan atur semua aset arsip hotel dengan efisien.'
+                            : `Pustaka dokumen digital khusus Divisi ${getUserDivision() || 'Anda'}.`
+                        }
+                    </p>
+                </div>
             </div>
-        </div>
+
+            <FilterPencarian
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                selectedDivisi={selectedDivisi}
+                setSelectedDivisi={setSelectedDivisi}
+                selectedType={selectedType}
+                setSelectedType={setSelectedType}
+                divisions={divisions}
+                totalResults={filteredArchives.length}
+            />
+
+            <TabelDokumen
+                data={filteredArchives.slice(0, 10)}
+                loading={loading}
+                onDeleteSuccess={(deletedId) => {
+                    // Optimistic update: langsung hapus dari state biar cepet
+                    setArchives(prev => prev.filter(a => a.id !== deletedId));
+                }}
+            />
+        </Layout>
     );
 };
 

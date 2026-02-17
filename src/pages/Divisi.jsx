@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import NavigasiSamping from '../components/dashboard/sidebar/NavigasiSamping';
+import Layout from '../components/layout/Layout';
 import KartuDivisi from '../components/dashboard/divisi/KartuDivisi';
-import Footer from '../components/dashboard/umum/Footer';
 import { useFirestore } from '../contexts/FirestoreContext';
 
 const Divisi = () => {
@@ -116,50 +115,41 @@ const Divisi = () => {
     };
 
     return (
-        <div className="flex h-screen overflow-hidden bg-white dark:bg-background-dark text-[#111318] dark:text-gray-100 font-display">
-            <NavigasiSamping />
-
-            <div className="flex-1 flex flex-col overflow-y-auto">
-                {/* Header */}
-                <header className="bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800 p-6 flex items-center justify-between sticky top-0 z-10">
-                    <div>
-                        <h2 className="text-2xl font-bold tracking-tight">Manajemen Divisi</h2>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm">Kelola struktur organisasi dan pembagian tugas hotel.</p>
-                    </div>
-                    <button
-                        onClick={() => handleOpenModal()}
-                        className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-lg font-semibold text-sm hover:bg-primary/90 transition-all shadow-md shadow-primary/20"
-                    >
-                        <span className="material-symbols-outlined text-sm">add</span>
-                        Tambah Divisi Baru
-                    </button>
-                </header>
-
-                <main className="p-6">
-                    {loading ? (
-                        <div className="flex justify-center py-20">
-                            <div className="size-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {divisionsWithRealCount.map((div) => (
-                                <KartuDivisi
-                                    key={div.id}
-                                    {...div}
-                                    onEdit={() => handleOpenModal(div)}
-                                    onDelete={() => handleDelete(div.id)}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </main>
-
-                <Footer />
+        <Layout title="Manajemen Divisi">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                <div>
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Manajemen Divisi</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base">Kelola struktur organisasi dan pembagian tugas hotel.</p>
+                </div>
+                <button
+                    onClick={() => handleOpenModal()}
+                    className="flex shrink-0 items-center justify-center gap-2 bg-primary text-white px-5 py-2.5 rounded-lg font-semibold text-sm hover:bg-primary/90 transition-all shadow-md shadow-primary/20"
+                >
+                    <span className="material-symbols-outlined text-sm">add</span>
+                    Tambah Divisi Baru
+                </button>
             </div>
+
+            {loading ? (
+                <div className="flex justify-center py-20">
+                    <div className="size-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {divisionsWithRealCount.map((div) => (
+                        <KartuDivisi
+                            key={div.id}
+                            {...div}
+                            onEdit={() => handleOpenModal(div)}
+                            onDelete={() => handleDelete(div.id)}
+                        />
+                    ))}
+                </div>
+            )}
 
             {/* MODAL FORM */}
             {showModal && (
-                <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                <div className="fixed inset-0 z-110 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
                     <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
                         <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800/50">
                             <h3 className="text-xl font-bold">{isEditing ? 'Perbarui Divisi' : 'Buat Divisi Baru'}</h3>
@@ -208,7 +198,7 @@ const Divisi = () => {
                     </div>
                 </div>
             )}
-        </div>
+        </Layout>
     );
 };
 

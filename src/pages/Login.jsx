@@ -140,7 +140,7 @@ const Login = () => {
                                 </div>
                                 <div className="relative group">
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <span className="material-symbols-outlined text-[#616f89] group-focus-within:text-primary transition-colors text-[20px]">lock</span>
+                                        <span className="material-symbols-outlined text-[#616f89] group-focus-within:text-primary transition-colors text-[20px]"></span>
                                     </div>
                                     <input
                                         className="flex w-full pl-11 rounded-lg text-[#111318] dark:text-white dark:bg-gray-800/50 border border-[#dbdfe6] dark:border-gray-700 focus:outline-0 focus:ring-2 focus:ring-primary/20 focus:border-primary h-12 placeholder:text-[#616f89] text-base font-normal leading-normal transition-all"

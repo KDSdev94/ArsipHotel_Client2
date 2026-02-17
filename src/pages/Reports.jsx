@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import NavigasiSamping from '../components/dashboard/sidebar/NavigasiSamping';
+import { useLocation } from 'react-router-dom';
+import Layout from '../components/layout/Layout';
 import StatistikLaporan from '../components/dashboard/laporan/StatistikLaporan';
 import GrafikDivisi from '../components/dashboard/divisi/GrafikDivisi';
 import GrafikTrenUnggahan from '../components/dashboard/dokumen/GrafikTrenUnggahan';
 import TabelAktivitasBaru from '../components/dashboard/laporan/TabelAktivitasBaru';
-import Footer from '../components/dashboard/umum/Footer';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { useFirestore } from '../contexts/FirestoreContext';
@@ -100,60 +99,52 @@ const Reports = () => {
     }, [location.pathname]);
 
     return (
-        <div className="flex h-screen overflow-hidden bg-white dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
-            <NavigasiSamping />
-            <main className="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-background-dark">
-                <div className="max-w-300 mx-auto p-8">
-                    <header className="flex flex-wrap items-center justify-between gap-6 mb-8">
-                        <div>
-                            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                                Laporan & Statistik
-                            </h1>
-                            <p className="text-slate-500 mt-1">
-                                {isAdmin()
-                                    ? 'Analisis data penggunaan arsip digital (Semua Divisi)'
-                                    : `Analisis data penggunaan arsip digital (Divisi: ${getUserDivision() || 'N/A'})`
-                                }
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="hidden md:flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 shadow-sm">
-                                <span className="material-symbols-outlined text-slate-400 text-xl mr-2">calendar_today</span>
-                                <span className="text-sm font-medium text-slate-600">Jan 2024 - Jun 2024</span>
-                            </div>
-                            <button
-                                onClick={handleExport}
-                                className="bg-primary hover:bg-blue-700 text-white flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg shadow-primary/20"
-                            >
-                                <span className="material-symbols-outlined text-xl">download</span>
-                                Ekspor Laporan
-                            </button>
-                        </div>
-                    </header>
-
-                    {loading ? (
-                        <div className="flex justify-center items-center py-20">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                        </div>
-                    ) : (
-                        <>
-                            {/* Top Stats - Pass filtered archives */}
-                            <StatistikLaporan archives={archives} />
-
-                            {/* Charts Row - Pass filtered archives */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                                <GrafikDivisi archives={archives} />
-                                <GrafikTrenUnggahan archives={archives} />
-                            </div>
-
-                            {/* Activity Table - Pass real logs */}
-                            <TabelAktivitasBaru activities={activities} />
-                        </>
-                    )}
+        <Layout title="Laporan & Statistik">
+            <header className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-6 mb-8">
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                        Laporan & Statistik
+                    </h1>
+                    <p className="text-slate-500 text-sm md:text-base mt-1">
+                        {isAdmin()
+                            ? 'Analisis data penggunaan arsip digital (Semua Divisi)'
+                            : `Analisis data penggunaan arsip digital (Divisi: ${getUserDivision() || 'N/A'})`
+                        }
+                    </p>
                 </div>
-                <Footer />
-            </main>
-        </div>
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <button
+                        onClick={handleExport}
+                        className="w-full sm:w-auto bg-primary hover:bg-blue-700 text-white flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg shadow-primary/20"
+                    >
+                        <span className="material-symbols-outlined text-xl">download</span>
+                        Ekspor Laporan
+                    </button>
+                </div>
+            </header>
+
+            {loading ? (
+                <div className="flex justify-center items-center py-20">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                </div>
+            ) : (
+                <div className="space-y-8">
+                    {/* Top Stats - Pass filtered archives */}
+                    <StatistikLaporan archives={archives} />
+
+                    {/* Charts Row - Pass filtered archives */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <GrafikDivisi archives={archives} />
+                        <GrafikTrenUnggahan archives={archives} />
+                    </div>
+
+                    {/* Activity Table - Pass real logs */}
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-8 shadow-sm border border-gray-200 dark:border-gray-700">
+                        <TabelAktivitasBaru activities={activities} />
+                    </div>
+                </div>
+            )}
+        </Layout>
     );
 };
 

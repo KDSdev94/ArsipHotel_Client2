@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSupabase } from '../contexts/SupabaseContext';
-import NavigasiSamping from '../components/dashboard/sidebar/NavigasiSamping';
+import Layout from '../components/layout/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import { useFirestore } from '../contexts/FirestoreContext';
 
@@ -13,6 +13,7 @@ const PreviewArsip = () => {
     const { deleteDocumentBySupabaseId, logActivity, getDocument } = useFirestore(); // Tambah Firestore context
     const [arsip, setArsip] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showDetails, setShowDetails] = useState(false);
 
     useEffect(() => {
         const fetchArsip = async () => {
@@ -94,57 +95,51 @@ const PreviewArsip = () => {
     const fileType = getFileType();
 
     return (
-        <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark font-display">
-            <NavigasiSamping />
-
-            {/* Main Content */}
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Global Header */}
-                <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 shrink-0 z-10 print:hidden">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => navigate(-1)}
-                            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors"
-                        >
-                            <span className="material-symbols-outlined text-sm">arrow_back</span>
-                            <span className="text-sm font-semibold whitespace-nowrap">Kembali</span>
-                        </button>
-                        <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden md:block"></div>
-                        <div className="hidden md:block">
-                            <h2 className="text-slate-800 dark:text-white text-base font-bold truncate max-w-75">
-                                {arsip.fileName}
+        <Layout title={arsip.judul} showBack={true}>
+            <div className="flex flex-col h-full -m-4 md:-m-8">
+                {/* Secondary Header for Preview Info & Actions */}
+                <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 py-2 shrink-0 z-10">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="size-8 md:size-10 bg-slate-50 dark:bg-slate-800 rounded-lg flex items-center justify-center shrink-0">
+                            <span className="material-symbols-outlined text-primary">
+                                {fileType === 'pdf' ? 'picture_as_pdf' : fileType === 'image' ? 'image' : fileType === 'excel' ? 'table_view' : 'description'}
+                            </span>
+                        </div>
+                        <div className="min-w-0">
+                            <h2 className="text-slate-800 dark:text-white text-sm md:text-base font-bold truncate">
+                                {arsip.judul}
                             </h2>
-                            <nav className="flex items-center gap-1 mt-0.5">
-                                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Arsip</span>
-                                <span className="material-symbols-outlined text-[12px] text-slate-300">chevron_right</span>
-                                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">{arsip.divisi}</span>
-                                <span className="material-symbols-outlined text-[12px] text-slate-300">chevron_right</span>
-                                <span className="text-[10px] text-primary uppercase tracking-wider font-semibold">{arsip.kategori || 'Dokumen'}</span>
-                            </nav>
+                            <p className="text-[10px] text-slate-400 font-semibold truncate uppercase tracking-wider hidden sm:block">
+                                {arsip.divisi} • {arsip.kategori}
+                            </p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                         <button
                             onClick={() => window.open(arsip.fileUrl, '_blank')}
-                            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-sm shadow-primary/20 hover:bg-primary/90 transition-colors"
+                            className="flex items-center gap-2 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-bold shadow-sm shadow-primary/20 hover:bg-primary/90 transition-colors"
                         >
-                            <span className="material-symbols-outlined text-[20px]">download</span>
-                            <span>Unduh</span>
+                            <span className="material-symbols-outlined text-base">download</span>
+                            <span className="hidden sm:inline">Unduh</span>
                         </button>
-                        <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
                         <button
-                            onClick={() => navigate(-1)}
-                            className="p-2 text-slate-500 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            onClick={() => setShowDetails(!showDetails)}
+                            className={`lg:hidden p-1.5 rounded-lg transition-colors ${showDetails ? 'bg-primary text-white' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                         >
-                            <span className="material-symbols-outlined">close</span>
+                            <span className="material-symbols-outlined">info</span>
+                        </button>
+                        <button
+                            onClick={handleDelete}
+                            className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        >
+                            <span className="material-symbols-outlined">delete</span>
                         </button>
                     </div>
-                </header>
+                </div>
 
-                <div className="flex-1 flex overflow-hidden">
+                <div className="flex-1 flex overflow-hidden relative">
                     {/* Main Preview Canvas */}
                     <div className="flex-1 bg-slate-100 dark:bg-slate-950 relative flex items-center justify-center overflow-hidden">
-
                         {fileType === 'pdf' ? (
                             <iframe
                                 src={`${arsip.fileUrl}#toolbar=1&navpanes=0&scrollbar=1`}
@@ -152,23 +147,12 @@ const PreviewArsip = () => {
                                 title="PDF Viewer"
                             />
                         ) : fileType === 'image' ? (
-                            <div className="w-full h-full overflow-auto p-8 flex items-center justify-center custom-scrollbar">
-                                <div className="relative group">
-                                    <img
-                                        src={arsip.fileUrl}
-                                        alt={arsip.judul}
-                                        className="rounded-xl shadow-2xl border border-white/20 object-contain max-h-[calc(100vh-12rem)]"
-                                    />
-                                    {/* Floating Image Controls (UI Placeholder as requested) */}
-                                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"><span className="material-symbols-outlined">remove</span></button>
-                                        <div className="px-3 text-xs font-semibold text-slate-500 border-x border-slate-200 dark:border-slate-700">Fit</div>
-                                        <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"><span className="material-symbols-outlined">add</span></button>
-                                        <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
-                                        <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"><span className="material-symbols-outlined">rotate_left</span></button>
-                                        <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"><span className="material-symbols-outlined">rotate_right</span></button>
-                                    </div>
-                                </div>
+                            <div className="w-full h-full overflow-auto p-4 md:p-8 flex items-center justify-center custom-scrollbar">
+                                <img
+                                    src={arsip.fileUrl}
+                                    alt={arsip.judul}
+                                    className="rounded-xl shadow-2xl border border-white/20 object-contain max-h-full"
+                                />
                             </div>
                         ) : (fileType === 'word' || fileType === 'excel') ? (
                             <div className="w-full h-full bg-white relative flex flex-col">
@@ -182,10 +166,10 @@ const PreviewArsip = () => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex-1 flex flex-col items-center justify-center p-20 text-center text-slate-500">
+                            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-500">
                                 <span className="material-symbols-outlined text-6xl text-slate-300 mb-4">description</span>
                                 <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Pratinjau tidak tersedia</h3>
-                                <p className="mb-6">Tipe file ini tidak didukung untuk pratinjau langsung.</p>
+                                <p className="mb-6 text-sm">Tipe file ini tidak didukung untuk pratinjau langsung.</p>
                                 <button
                                     onClick={() => window.open(arsip.fileUrl, '_blank')}
                                     className="px-6 py-2 bg-primary text-white rounded-lg font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20"
@@ -196,15 +180,20 @@ const PreviewArsip = () => {
                         )}
                     </div>
 
-                    {/* Metadata Sidebar (Right) */}
-                    <aside className="w-80 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0">
-                        <div className="p-6 border-b border-slate-200 dark:border-slate-800 text-center">
-                            <div className="size-16 mx-auto bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
-                                <span className="material-symbols-outlined text-3xl text-primary">
-                                    {fileType === 'pdf' ? 'picture_as_pdf' : fileType === 'image' ? 'image' : fileType === 'excel' ? 'table_view' : 'description'}
-                                </span>
-                            </div>
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Detail Dokumen</h3>
+                    {/* Metadata Sidebar */}
+                    <aside className={`
+                        absolute inset-y-0 right-0 w-72 md:w-80 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0 z-20 transition-transform duration-300
+                        lg:relative lg:translate-x-0
+                        ${showDetails ? 'translate-x-0' : 'translate-x-full'}
+                    `}>
+                        <div className="p-6 border-b border-slate-200 dark:border-slate-800 text-center relative">
+                            <button
+                                onClick={() => setShowDetails(false)}
+                                className="lg:hidden absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                            >
+                                <span className="material-symbols-outlined">chevron_right</span>
+                            </button>
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Detail Dokumen</h3>
                         </div>
 
                         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
@@ -243,7 +232,7 @@ const PreviewArsip = () => {
                                         <div>
                                             <p className="text-[10px] font-bold text-slate-400 uppercase">Diunggah Oleh</p>
                                             <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{arsip.uploaderName || 'Administrator'}</p>
-                                            <p className="text-[10px] text-slate-500 mt-0.5">{arsip.uploaderEmail || ''}</p>
+                                            <p className="text-[10px] text-slate-500 mt-0.5 break-all">{arsip.uploaderEmail || ''}</p>
                                             <p className="text-[10px] text-slate-500 mt-0.5">{new Date(arsip.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(arsip.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</p>
                                         </div>
                                     </div>
@@ -259,20 +248,10 @@ const PreviewArsip = () => {
                                 </div>
                             )}
                         </div>
-
-                        <div className="p-6 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-200 dark:border-slate-800 space-y-3">
-                            <button
-                                onClick={handleDelete}
-                                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-100 text-red-500 hover:bg-red-50 transition-colors text-sm font-bold"
-                            >
-                                <span className="material-symbols-outlined text-[18px]">delete</span>
-                                <span>Hapus Arsip</span>
-                            </button>
-                        </div>
                     </aside>
                 </div>
-            </main>
-        </div>
+            </div>
+        </Layout>
     );
 };
 

@@ -4,7 +4,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useUserProfile } from '../../../contexts/UserProfileContext';
 
 // Komponen buat header di atas. Nerima 'title' (judul) dan 'showBack' (tampilkan tombol kembali)
-const HeaderAtas = ({ title, showBack = false }) => {
+const HeaderAtas = ({ title, showBack = false, onMenuClick }) => {
     const navigate = useNavigate(); // Fungsi buat pindah-pindah halaman secara manual
     const { currentUser, logout } = useAuth();
     const { userProfile } = useUserProfile();
@@ -34,14 +34,24 @@ const HeaderAtas = ({ title, showBack = false }) => {
 
     return (
         // Header ini "sticky" (nempel di atas pas di-scroll) dan punya efek glassmorphism (blur)
-        <header className="flex items-center justify-between sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white/80 backdrop-blur-md dark:bg-background-dark/80 px-8 py-4">
-            <div className="flex items-center gap-4">
+        <header className="flex items-center justify-between sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white/80 backdrop-blur-md dark:bg-background-dark/80 px-4 md:px-8 py-4">
+            <div className="flex items-center gap-3 md:gap-4">
+                {/* Tombol Menu buat Mobile */}
+                <button
+                    onClick={onMenuClick}
+                    className="p-2 -ml-2 lg:hidden text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                >
+                    <span className="material-symbols-outlined">menu</span>
+                </button>
+
                 {/* Judul halamannya, kalo gak dikirim, defaultnya 'Arsip Digital' */}
-                <h2 className="text-[#111318] dark:text-white text-lg font-bold uppercase tracking-tight">{title || 'Arsip Digital'}</h2>
+                <h2 className="text-[#111318] dark:text-white text-base md:text-lg font-bold uppercase tracking-tight">
+                    {title || 'Arsip Digital'}
+                </h2>
             </div>
 
-            <div className="flex justify-end gap-6 items-center">
-                <div className="flex gap-3">
+            <div className="flex justify-end gap-3 md:gap-6 items-center">
+                <div className="flex gap-2 md:gap-3">
                     {/* Logika: Kalo showBack itu 'true', tampilkan tombol Kembali. Kalo 'false', tampilkan tombol Unggah Cepat. */}
                     {showBack ? (
                         <button
@@ -54,7 +64,7 @@ const HeaderAtas = ({ title, showBack = false }) => {
                     ) : (
                         <button
                             onClick={() => navigate('/upload')} // Kalo diklik, langsung pindah ke halaman upload
-                            className="flex min-w-35 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold shadow-sm hover:bg-blue-700 transition-colors"
+                            className="hidden md:flex min-w-35 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold shadow-sm hover:bg-blue-700 transition-colors"
                         >
                             <span className="material-symbols-outlined text-sm">cloud_upload</span>
                             <span>Unggah Cepat</span>
