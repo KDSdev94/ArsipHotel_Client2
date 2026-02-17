@@ -197,6 +197,48 @@ export const FirestoreProvider = ({ children }) => {
     };
 
     // ============================================
+    // DELETE - Hapus dokumen berdasarkan Supabase ID (Sync logic)
+    // ============================================
+    const deleteDocumentBySupabaseId = async (collectionName, supabaseId) => {
+        try {
+            const colRef = collection(db, collectionName);
+            const q = query(colRef, where('supabaseId', '==', supabaseId));
+            const snapshot = await getDocs(q);
+
+            if (snapshot.empty) {
+                console.warn(`No document found in Firestore with supabaseId: ${supabaseId}`);
+                return { success: true }; // Consider it success if already gone
+            }
+
+            // Hapus semua baris yang cocok (biasanya cuma 1)
+            const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+            await Promise.all(deletePromises);
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error deleting document by supabaseId:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
+    // ============================================
+    // LOGGING - Catat aktivitas ke Firestore
+    // ============================================
+    const logActivity = async (activityData) => {
+        try {
+            // activityData: { user, email, action, documentName, status, type }
+            await addDoc(collection(db, 'activities'), {
+                ...activityData,
+                timestamp: serverTimestamp()
+            });
+            return { success: true };
+        } catch (error) {
+            console.error('Error logging activity:', error);
+            return { success: false };
+        }
+    };
+
+    // ============================================
     // QUERY HELPERS - Fungsi bantuan buat query
     // ============================================
 
@@ -220,6 +262,8 @@ export const FirestoreProvider = ({ children }) => {
         getDocuments,
         updateDocument,
         deleteDocument,
+        deleteDocumentBySupabaseId,
+        logActivity,
 
         // Real-time
         subscribeToCollection,

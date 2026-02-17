@@ -21,6 +21,8 @@ import Kategori from './pages/Kategori'; // Halaman kelola kategori arsip
 import Users from './pages/Users'; // Halaman kelola karyawan
 import GantiPassword from './pages/GantiPassword'; // Halaman ganti password
 import Reports from './pages/Reports'; // Halaman lihat laporan
+import Profile from './pages/Profile'; // Halaman profil pengguna
+import PreviewArsip from './pages/PreviewArsip'; // Halaman pratinjau dokumen
 
 import './App.css'; // File CSS khusus buat styling App
 
@@ -72,6 +74,12 @@ function App() {
 
         {/* Route Reports - Lihat laporan dan statistik */}
         <Route path="/reports" element={<Reports />} />
+
+        {/* Route Profile - Lihat dan edit profil user */}
+        <Route path="/profile" element={<Profile />} />
+
+        {/* Route Preview - Lihat detail dan pratinjau arsip */}
+        <Route path="/preview/:id" element={<PreviewArsip />} />
 
 
         {/* ========== DEFAULT ROUTE ========== */}

@@ -5,6 +5,7 @@
 
 import React, { useState } from 'react';
 import NavigasiSamping from '../components/dashboard/sidebar/NavigasiSamping';
+import Footer from '../components/dashboard/umum/Footer';
 import { useAuth } from '../contexts/AuthContext';
 
 const GantiPassword = () => {
@@ -77,8 +78,8 @@ const GantiPassword = () => {
                             {/* Alert Message */}
                             {message.text && (
                                 <div className={`p-4 rounded-xl flex items-start gap-3 border animate-in fade-in slide-in-from-top-2 duration-300 ${message.type === 'success'
-                                        ? 'bg-emerald-50 border-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400'
-                                        : 'bg-red-50 border-red-100 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
+                                    ? 'bg-emerald-50 border-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400'
+                                    : 'bg-red-50 border-red-100 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
                                     }`}>
                                     <span className="material-symbols-outlined text-[20px] mt-0.5">
                                         {message.type === 'success' ? 'check_circle' : 'error'}
@@ -152,11 +153,7 @@ const GantiPassword = () => {
                     </div>
                 </main>
 
-                <footer className="mt-auto py-6 px-10 border-t border-gray-100 dark:border-gray-800 flex flex-col items-center">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">
-                        © 2026 E-Arsip System Security
-                    </p>
-                </footer>
+                <Footer />
             </div>
         </div>
     );

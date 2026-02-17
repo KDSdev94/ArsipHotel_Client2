@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 import NavigasiSamping from '../components/dashboard/sidebar/NavigasiSamping';
 import StatistikPengguna from '../components/dashboard/pengguna/StatistikPengguna';
 import TabelPengguna from '../components/dashboard/pengguna/TabelPengguna';
+import Footer from '../components/dashboard/umum/Footer';
 
 import { useFirestore } from '../contexts/FirestoreContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -218,7 +219,7 @@ const Users = () => {
 
                 {/* ========== MODAL FORM ========== */}
                 {showModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
                         <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
                             <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                                 <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase">
@@ -307,6 +308,7 @@ const Users = () => {
                         </div>
                     </div>
                 )}
+                <Footer />
             </main>
         </div>
     );

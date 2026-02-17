@@ -1,0 +1,125 @@
+// ============================================
+// FILE: UserProfileContext.jsx
+// FUNGSI: Context untuk kelola profil user lengkap (role, division, dll)
+// FITUR: Auto-fetch user profile dari Firestore berdasarkan Auth
+// ============================================
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import { useFirestore } from './FirestoreContext';
+
+const UserProfileContext = createContext();
+
+export const useUserProfile = () => {
+    const context = useContext(UserProfileContext);
+    if (!context) {
+        throw new Error('useUserProfile harus dipanggil di dalam UserProfileProvider');
+    }
+    return context;
+};
+
+export const UserProfileProvider = ({ children }) => {
+    const { currentUser } = useAuth();
+    const { getDocument } = useFirestore();
+
+    const [userProfile, setUserProfile] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    // ============================================
+    // FETCH USER PROFILE DARI FIRESTORE
+    // ============================================
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            if (!currentUser) {
+                setUserProfile(null);
+                setLoading(false);
+                return;
+            }
+
+            try {
+                // Ambil data user dari Firestore berdasarkan UID
+                const result = await getDocument('users', currentUser.uid);
+
+                if (result.success) {
+                    setUserProfile(result.data);
+                } else {
+                    console.warn('User profile not found in Firestore');
+                    setUserProfile(null);
+                }
+            } catch (error) {
+                console.error('Error fetching user profile:', error);
+                setUserProfile(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUserProfile();
+    }, [currentUser]);
+
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+
+    // Cek apakah user adalah Admin
+    const isAdmin = () => {
+        return userProfile?.role === 'Admin';
+    };
+
+    // Cek apakah user adalah Staf
+    const isStaf = () => {
+        return userProfile?.role === 'Staf';
+    };
+
+    // Get division user
+    const getUserDivision = () => {
+        return userProfile?.division || 'Umum';
+    };
+
+    const value = {
+        userProfile,
+        loading,
+        isAdmin,
+        isStaf,
+        getUserDivision,
+    };
+
+    return (
+        <UserProfileContext.Provider value={value}>
+            {!loading && children}
+        </UserProfileContext.Provider>
+    );
+};
+
+/*
+  ============================================
+  CARA PAKAI UserProfileContext:
+  ============================================
+  
+  1. WRAP APP DI main.jsx (SETELAH AuthProvider):
+     
+     import { UserProfileProvider } from './contexts/UserProfileContext';
+     
+     <AuthProvider>
+       <UserProfileProvider>
+         <App />
+       </UserProfileProvider>
+     </AuthProvider>
+  
+  2. PAKAI DI KOMPONEN:
+     
+     import { useUserProfile } from '../contexts/UserProfileContext';
+     
+     const MyComponent = () => {
+       const { userProfile, isAdmin, isStaf, getUserDivision } = useUserProfile();
+       
+       if (isAdmin()) {
+         return <AdminView />;
+       }
+       
+       if (isStaf()) {
+         const division = getUserDivision();
+         return <StafView division={division} />;
+       }
+     };
+*/

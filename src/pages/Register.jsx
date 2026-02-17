@@ -81,21 +81,22 @@ const Register = () => {
 
                 {/* Bagian Kiri (Visual) - Fixed h-full, no scroll */}
                 <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12 overflow-hidden bg-slate-900">
-                    <div className="absolute inset-0 z-0">
-                        <div className="absolute inset-0 bg-black/40 z-10"></div>
-                        <div
-                            className="w-full h-full bg-cover bg-center transition-transform duration-[10s] hover:scale-110"
-                            style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuB-uDJB2hql2DqYZlF8U4jlh-LiogNukQMrx9JrBvYNAijrDDinnlVw6sKP_8b91rrOJS0AHl6M6m2HZO0ccQqtgJPqIU5iyt3g88O0tMVSZIw7o6ZMiMNwrnYuHSv5JI5uLfhv6OSnigwiFIgxiN31luiYBttIuYnk7gLVirYwT-4vFW0NXpGIro9t7Gf1ZfuIu10jkxr5g0WkDSMVk-23EWQpEBb02bKuxHUc_jcUi9a6ko_39wYUVhZlrs2XfiI-vHgwXbLX-GuS")' }}
-                        ></div>
+                    <div className="absolute inset-0">
+                        <img
+                            src="/background.jpeg"
+                            alt="Hotel Background"
+                            className="w-full h-full object-cover opacity-50"
+                        />
+                        <div className="absolute inset-0 bg-black/40"></div>
                     </div>
 
                     <div className="relative z-10 text-white max-w-lg">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="bg-black/10 backdrop-blur-md p-2 rounded-lg border border-white/20">
-                                <img className="w-16 h-16" src="logo_512.png" alt="logo" />
+                                <img className="w-16 h-16" src="/logo_512.png" alt="logo" />
 
                             </div>
-                            <h2 className="text-2xl font-bold tracking-tight">E-Arsip System</h2>
+                            <h2 className="text-2xl font-bold tracking-tight">Arsip Hotel</h2>
                         </div>
 
                         <h1 className="text-5xl font-extrabold leading-tight mb-6">Kelola Dokumen Hotel Secara Digital</h1>
@@ -119,7 +120,7 @@ const Register = () => {
 
                 {/* Bagian Kanan (Form) - Fixed h-full, content centered */}
                 <div className="w-full lg:w-1/2 bg-white dark:bg-background-dark flex flex-col justify-center px-6 sm:px-12 lg:px-20 py-8 relative overflow-y-auto">
-                    <div className="max-w-[420px] w-full mx-auto">
+                    <div className="max-w-105 w-full mx-auto">
 
                         {/* Logo Mobile (Sama dengan Login) */}
                         <div className="lg:hidden flex items-center gap-3 mb-10">

@@ -1,14 +1,22 @@
 import React from 'react';
 import NavigasiSamping from '../components/dashboard/sidebar/NavigasiSamping';
 import HeaderAtas from '../components/dashboard/header/HeaderAtas';
-// Komponen khusus buat area drop file, progress bar, dan form input metadata
+import Footer from '../components/dashboard/umum/Footer';
 import FileUploadArea from '../components/upload/FileUploadArea';
 import UploadProgress from '../components/upload/UploadProgress';
 import DocumentMetadataForm from '../components/upload/DocumentMetadataForm';
 
 const UploadDocument = () => {
+    const [selectedFile, setSelectedFile] = React.useState(null);
+    const [uploadProgress, setUploadProgress] = React.useState(0);
+
+    const handleFileSelect = (file) => {
+        setSelectedFile(file);
+        setUploadProgress(0); // Reset progress tiap milih file baru
+    };
+
     return (
-        <div className="flex h-screen overflow-hidden bg-white dark:bg-background-dark text-[#111318] dark:text-gray-100 font-sans">
+        <div className="flex h-screen overflow-hidden bg-white dark:bg-background-dark text-[#111318] dark:text-gray-100 font-display">
             {/* Navigasi Samping */}
             <NavigasiSamping />
 
@@ -28,20 +36,24 @@ const UploadDocument = () => {
                     </div>
 
                     {/* Kotak tempat narik (drag) atau milih file */}
-                    <FileUploadArea />
+                    <FileUploadArea onFileSelect={handleFileSelect} selectedFile={selectedFile} />
 
-                    {/* Progress Bar akan muncul di sini saat proses upload aktif */}
-                    {/* <UploadProgress fileName="Annual_Report_2026.pdf" progress={45} /> */}
+                    {/* Progress Bar muncul otomatis pas upload */}
+                    {selectedFile && uploadProgress > 0 && (
+                        <UploadProgress
+                            fileName={selectedFile.name}
+                            progress={uploadProgress}
+                        />
+                    )}
 
                     {/* Form buat isi nama dokumen, kategori, tanggal, dll */}
-                    <DocumentMetadataForm />
+                    <DocumentMetadataForm
+                        file={selectedFile}
+                        onProgress={setUploadProgress}
+                    />
                 </main>
 
-                <footer className="mt-auto py-6 px-10 border-t border-gray-200 dark:border-gray-800 text-center">
-                    <p className="text-xs text-[#616f89] dark:text-gray-500">
-                        © 2026 Arsip Digital Hotel. Semua dokumen dienkripsi dan diamankan.
-                    </p>
-                </footer>
+                <Footer />
             </div>
         </div>
     );

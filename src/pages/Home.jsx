@@ -1,64 +1,117 @@
-import React from 'react';
-import NavigasiSamping from '../components/dashboard/sidebar/NavigasiSamping'; // Komponen navigasi samping
-import HeaderAtas from '../components/dashboard/header/HeaderAtas'; // Komponen header atas
-import FilterPencarian from '../components/dashboard/umum/FilterPencarian'; // Komponen untuk pencarian dan filter
-import TabelDokumen from '../components/dashboard/dokumen/TabelDokumen'; // Komponen tabel daftar dokumen
+import React, { useState, useEffect } from 'react';
+import NavigasiSamping from '../components/dashboard/sidebar/NavigasiSamping';
+import HeaderAtas from '../components/dashboard/header/HeaderAtas';
+import FilterPencarian from '../components/dashboard/umum/FilterPencarian';
+import TabelDokumen from '../components/dashboard/dokumen/TabelDokumen';
+import { useSupabase } from '../contexts/SupabaseContext';
+import { useUserProfile } from '../contexts/UserProfileContext';
+import Footer from '../components/dashboard/umum/Footer';
+import { useFirestore } from '../contexts/FirestoreContext';
+import { useLocation } from 'react-router-dom';
 
 const Home = () => {
-    return (
-        // Wrapper utama: 
-        // flex (menggunakan Flexbox), h-screen (tinggi layar penuh), overflow-hidden (mencegah scroll di level body)
-        // bg-white / dark:bg-background-dark (warna background dinamis tergantung mode)
-        <div className="flex h-screen overflow-hidden bg-white dark:bg-background-dark text-[#111318] dark:text-gray-100 font-sans">
+    const location = useLocation();
+    const { getArchives, getArchivesByDivision } = useSupabase();
+    const { isAdmin, getUserDivision } = useUserProfile();
+    const { getDocuments } = useFirestore();
+    const [archives, setArchives] = useState([]);
+    const [divisions, setDivisions] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-            {/* Sidebar: Terletak di kiri karena flex-direction default adalah row */}
+    // Filter states
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedDivisi, setSelectedDivisi] = useState('');
+    const [selectedType, setSelectedType] = useState('');
+
+    const fetchInitialData = async () => {
+        setLoading(true);
+
+        // Ambil Arsip berdasarkan Role
+        let arcResult;
+        if (isAdmin()) {
+            arcResult = await getArchives();
+        } else {
+            const userDiv = getUserDivision();
+            if (userDiv) {
+                arcResult = await getArchivesByDivision(userDiv);
+            } else {
+                arcResult = { success: true, data: [] };
+            }
+        }
+
+        if (arcResult.success) setArchives(arcResult.data);
+
+        // Ambil Divisi
+        const divResult = await getDocuments('divisions');
+        if (divResult.success) setDivisions(divResult.data);
+
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        fetchInitialData();
+
+        // Auto reload saat window dapet focus lagi (misal abis dari tab lain)
+        window.addEventListener('focus', fetchInitialData);
+        return () => window.removeEventListener('focus', fetchInitialData);
+    }, [location.pathname]); // Re-fetch tiap pindah halaman
+
+    const filteredArchives = archives.filter(item => {
+        const matchesSearch = (item.judul?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.nomorArsip?.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesDivisi = selectedDivisi === '' || item.divisi === selectedDivisi;
+        const matchesType = selectedType === '' || item.fileType?.toLowerCase().includes(selectedType.toLowerCase());
+
+        return matchesSearch && matchesDivisi && matchesType;
+    });
+
+    return (
+        <div className="flex h-screen overflow-hidden bg-white dark:bg-background-dark text-[#111318] dark:text-gray-100 font-display">
             <NavigasiSamping />
 
-            {/* Area Konten Utama: 
-                flex-1 (mengambil sisa space yang ada), flex flex-col (konten di dalamnya disusun vertikal)
-                overflow-y-auto (scroll hanya ada di area ini jika konten panjang)
-            */}
             <div className="flex-1 flex flex-col overflow-y-auto">
-
-                {/* Header: Menampilkan judul halaman */}
                 <HeaderAtas title="Pustaka Dokumen" />
 
-                {/* Main Content: Area tempat komponen dashboard diletakkan */}
                 <main className="flex-1 p-8">
-                    {/* Bagian Judul dan Tombol Aksi */}
                     <div className="flex flex-wrap justify-between items-end gap-4 mb-8">
                         <div className="flex flex-col gap-1">
-                            <h1 className="text-[#111318] dark:text-white text-3xl font-bold font-sans leading-tight tracking-tight">
+                            <h1 className="text-[#111318] dark:text-white text-3xl font-bold leading-tight tracking-tight">
                                 Beranda Arsip Digital
                             </h1>
                             <p className="text-[#616f89] dark:text-gray-400 text-base font-normal">
-                                Kelola, cari, dan atur semua aset arsip hotel dengan efisien.
+                                {isAdmin()
+                                    ? 'Kelola, cari, dan atur semua aset arsip hotel dengan efisien.'
+                                    : `Pustaka dokumen digital khusus Divisi ${getUserDivision() || 'Anda'}.`
+                                }
                             </p>
-                        </div>
-                        <div className="flex gap-3">
-                            {/* Tombol Ekspor: Menggunakan hover dan transition untuk efek UI yang premium */}
-                            <button className="flex items-center justify-center rounded-lg h-10 px-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[#111318] dark:text-white text-sm font-bold shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <span className="material-symbols-outlined mr-2">download_for_offline</span>
-                                Ekspor Data
-                            </button>
                         </div>
                     </div>
 
-                    {/* Memanggil Komponen Search and Filters */}
-                    <FilterPencarian />
-                    <TabelDokumen />
+                    <FilterPencarian
+                        searchTerm={searchTerm}
+                        setSearchTerm={setSearchTerm}
+                        selectedDivisi={selectedDivisi}
+                        setSelectedDivisi={setSelectedDivisi}
+                        selectedType={selectedType}
+                        setSelectedType={setSelectedType}
+                        divisions={divisions}
+                        totalResults={filteredArchives.length}
+                    />
+
+                    <TabelDokumen
+                        data={filteredArchives.slice(0, 10)}
+                        loading={loading}
+                        onDeleteSuccess={(deletedId) => {
+                            // Optimistic update: langsung hapus dari state biar cepet
+                            setArchives(prev => prev.filter(a => a.id !== deletedId));
+                        }}
+                    />
                 </main>
 
-                {/* Footer: Informasi hak cipta */}
-                <footer className="mt-auto py-6 px-10 border-t border-gray-200 dark:border-gray-800 text-center">
-                    <p className="text-xs text-[#616f89] dark:text-gray-500">
-                        © 2026 Sistem Manajemen Arsip Digital Hotel. Semua dokumen dienkripsi dan diamankan.
-                    </p>
-                </footer>
+                <Footer />
             </div>
         </div>
     );
 };
 
 export default Home;
-

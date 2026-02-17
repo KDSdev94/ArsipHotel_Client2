@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import NavigasiSamping from '../components/dashboard/sidebar/NavigasiSamping';
 import KartuDivisi from '../components/dashboard/divisi/KartuDivisi';
+import Footer from '../components/dashboard/umum/Footer';
 import { useFirestore } from '../contexts/FirestoreContext';
 
 const Divisi = () => {
     // ---- STATE ----
-    const { subscribeToCollection, addDocument, updateDocument, deleteDocument } = useFirestore();
+    const location = useLocation();
+    const { subscribeToCollection, addDocument, updateDocument, deleteDocument, getDocuments } = useFirestore();
 
     const [divisions, setDivisions] = useState([]); // List divisi dari Firebase
+    const [users, setUsers] = useState([]); // List user buat hitung anggota riil
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -20,6 +24,14 @@ const Divisi = () => {
         userCount: 0 // Default 0 anggota
     });
 
+    const fetchData = async () => {
+        // Ambil data user untuk menghitung anggota riil per divisi
+        const userResult = await getDocuments('users');
+        if (userResult.success) {
+            setUsers(userResult.data);
+        }
+    };
+
     // ---- AMBIL DATA REAL-TIME ----
     useEffect(() => {
         // Nama koleksi diganti jadi 'divisions'
@@ -28,10 +40,24 @@ const Divisi = () => {
             setLoading(false);
         });
 
+        fetchData();
+
+        // Auto Refresh
+        window.addEventListener('focus', fetchData);
+
         return () => {
             if (unsubscribe) unsubscribe();
+            window.removeEventListener('focus', fetchData);
         };
-    }, []);
+    }, [location.pathname]);
+
+    // Gabungkan data divisi dengan hitungan riil anggota
+    const divisionsWithRealCount = useMemo(() => {
+        return divisions.map(div => {
+            const realMemberCount = users.filter(u => u.division === div.name).length;
+            return { ...div, userCount: realMemberCount };
+        });
+    }, [divisions, users]);
 
     // ---- FUNGSI SIMPAN (TAMBAH/EDIT) ----
     const handleSubmit = async (e) => {
@@ -90,7 +116,7 @@ const Divisi = () => {
     };
 
     return (
-        <div className="flex h-screen overflow-hidden bg-white dark:bg-background-dark text-[#111318] dark:text-gray-100 font-sans">
+        <div className="flex h-screen overflow-hidden bg-white dark:bg-background-dark text-[#111318] dark:text-gray-100 font-display">
             <NavigasiSamping />
 
             <div className="flex-1 flex flex-col overflow-y-auto">
@@ -116,7 +142,7 @@ const Divisi = () => {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {divisions.map((div) => (
+                            {divisionsWithRealCount.map((div) => (
                                 <KartuDivisi
                                     key={div.id}
                                     {...div}
@@ -128,14 +154,12 @@ const Divisi = () => {
                     )}
                 </main>
 
-                <footer className="mt-auto p-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
-                    <p className="text-xs text-slate-500 font-medium">{divisions.length} Divisi Aktif</p>
-                </footer>
+                <Footer />
             </div>
 
             {/* MODAL FORM */}
             {showModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
                     <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
                         <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800/50">
                             <h3 className="text-xl font-bold">{isEditing ? 'Perbarui Divisi' : 'Buat Divisi Baru'}</h3>

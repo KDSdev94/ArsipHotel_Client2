@@ -4,58 +4,111 @@
 // FITUR: Filter (Search, Divisi, Tanggal), Tabel lengkap, Pagination
 // ============================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import NavigasiSamping from '../components/dashboard/sidebar/NavigasiSamping';
+import { useSupabase } from '../contexts/SupabaseContext';
+import { useUserProfile } from '../contexts/UserProfileContext';
+import { useFirestore } from '../contexts/FirestoreContext';
+import { useAuth } from '../contexts/AuthContext';
+import Footer from '../components/dashboard/umum/Footer';
 
 const DaftarArsip = () => {
-    // ============================================
-    // STATE MANAGEMENT
-    // ============================================
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { currentUser } = useAuth();
+    const { getArchives, getArchivesByDivision, deleteArchive } = useSupabase();
+    const { isAdmin, getUserDivision } = useUserProfile();
+    const { deleteDocumentBySupabaseId, logActivity, getDocument } = useFirestore();
+    const [archives, setArchives] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // State untuk filter
+    // ... (rest of states)
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDivisi, setSelectedDivisi] = useState('');
     const [selectedDate, setSelectedDate] = useState('');
 
-    // Data dummy arsip (nanti diganti dengan data dari Firebase)
-    const dummyArsip = [
-        {
-            id: 1,
-            nomorArsip: 'ARS-2023-0881',
-            divisi: 'Finance',
-            judul: 'Laporan Audit Tahunan 2023',
-            kategori: 'Laporan',
-            tglUpload: '12 Jan 2024',
-            tglDokumen: '31 Des 2023',
-            tglBerakhir: '31 Des 2033',
-            status: 'AKTIF',
-            statusColor: 'green'
-        },
-        {
-            id: 2,
-            nomorArsip: 'ARS-2018-0242',
-            divisi: 'Maintenance',
-            judul: 'Kontrak Vendor Lift Phase 1',
-            kategori: 'Kontrak',
-            tglUpload: '05 Feb 2018',
-            tglDokumen: '01 Feb 2018',
-            tglBerakhir: '01 Feb 2023',
-            status: 'BERAKHIR',
-            statusColor: 'red'
-        },
-        {
-            id: 3,
-            nomorArsip: 'ARS-2024-0015',
-            divisi: 'IT & Security',
-            judul: 'Draft Kebijakan Password 2024',
-            kategori: 'Internal',
-            tglUpload: '15 Mar 2024',
-            tglDokumen: '10 Mar 2024',
-            tglBerakhir: '10 Mar 2029',
-            status: 'INAKTIF',
-            statusColor: 'orange'
+    // Fetch data from Supabase with role-based filtering
+    const fetchArchives = async () => {
+        setLoading(true);
+
+        let result;
+        if (isAdmin()) {
+            // Admin bisa lihat semua arsip
+            result = await getArchives();
+        } else {
+            // Staf cuma bisa lihat arsip dari divisinya
+            const userDivision = getUserDivision();
+            if (userDivision) {
+                result = await getArchivesByDivision(userDivision);
+            } else {
+                result = { success: true, data: [] };
+            }
         }
-    ];
+
+        if (result.success) {
+            setArchives(result.data);
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        fetchArchives();
+
+        // Auto reload
+        window.addEventListener('focus', fetchArchives);
+        return () => window.removeEventListener('focus', fetchArchives);
+    }, [location.pathname]);
+
+    // Handle Delete (Synced with Firestore)
+    const handleDelete = async (id, filePath) => {
+        // Cari data arsip sebelum dihapus buat logging
+        const archiveToDelete = archives.find(a => a.id === id);
+
+        if (window.confirm("Apakah Anda yakin ingin menghapus arsip ini?")) {
+            // 1. Hapus dari Supabase
+            const result = await deleteArchive(id, filePath);
+            if (result.success) {
+                // 2. Hapus juga dari Firestore secara background (sync)
+                await deleteDocumentBySupabaseId('archives', id);
+
+                // 3. Catat Laporan Aktivitas Hapus ke Firestore
+                let finalName = currentUser?.displayName || 'Admin';
+
+                // Jika nama di Auth kosong, ambil dari koleksi 'users' di Firestore
+                if (!currentUser?.displayName || currentUser?.displayName === 'Unknown') {
+                    const userProfile = await getDocument('users', currentUser?.uid);
+                    if (userProfile.success && userProfile.data.name) {
+                        finalName = userProfile.data.name;
+                    }
+                }
+
+                await logActivity({
+                    user: finalName,
+                    email: currentUser?.email || 'Unknown',
+                    action: 'Menghapus',
+                    documentName: archiveToDelete?.judul || 'Dokumen',
+                    status: 'Berhasil',
+                    type: 'delete'
+                });
+
+                alert("Arsip berhasil dihapus!");
+                setArchives(prev => prev.filter(item => item.id !== id));
+            } else {
+                alert("Gagal menghapus: " + result.error);
+            }
+        }
+    };
+
+    // Filter logic
+    const filteredArchives = archives.filter(item => {
+        const matchesSearch = item.judul?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.nomorArsip?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesDivisi = selectedDivisi === '' || item.divisi === selectedDivisi;
+        const matchesDate = selectedDate === '' || item.tglDokumen === selectedDate;
+
+        return matchesSearch && matchesDivisi && matchesDate;
+    });
 
     // Fungsi reset filter
     const handleReset = () => {
@@ -77,19 +130,10 @@ const DaftarArsip = () => {
                     <div className="flex items-center gap-4">
                         <h2 className="text-slate-900 dark:text-white text-lg font-bold">Manajemen Arsip</h2>
                     </div>
-                    <div className="flex justify-end gap-6 items-center">
-                        <div className="flex items-center gap-3">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Admin Pusat</span>
-                            <div
-                                className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 border border-gray-200 dark:border-gray-700"
-                                style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAI9KmT-mGBsXfTuk9OAjga3QOW9bEi__D5IJ5cxtyHAzh9aTSTRnJvziaA3KOz_u0HzXwtwHxjL_I4RoHA71ZGV1-R8EAAHT2CuNzomabLdgDJxxuK-WV9uHTMM3AVIPt6kjwkDzyVXTy0ltcBnaF_bniIp4fgkSSKhmTzHHRWDH_pB-p7T58ttawc9Nn8OUkRB3h1wUb0SmZ37FlBw7oRk_dzleYEQ861SZMb6Mjx57ANm4HNaHac5SSLrWn-nJ9sgWGsqlecdh1p")' }}
-                            ></div>
-                        </div>
-                    </div>
                 </header>
 
                 {/* ========== MAIN CONTENT ========== */}
-                <main className="flex-1 p-8 w-full max-w-[1440px] mx-auto">
+                <main className="flex-1 p-8 w-full max-w-360 mx-auto">
 
                     {/* Judul Halaman */}
                     <div className="mb-8">
@@ -108,12 +152,12 @@ const DaftarArsip = () => {
                             {/* Filter Search */}
                             <div className="space-y-2">
                                 <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" htmlFor="search">
-                                    Cari Nama / Code
+                                    CARI JUDUL / NOMOR
                                 </label>
                                 <input
                                     className="w-full rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary text-sm px-3 py-2 outline-none"
                                     id="search"
-                                    placeholder="Contoh: ARS-2023-001"
+                                    placeholder="Cari kata kunci..."
                                     type="text"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -132,10 +176,10 @@ const DaftarArsip = () => {
                                     onChange={(e) => setSelectedDivisi(e.target.value)}
                                 >
                                     <option value="">Semua Divisi</option>
-                                    <option value="fin">Finance</option>
-                                    <option value="hrd">Human Resource</option>
-                                    <option value="ops">Operations</option>
-                                    <option value="it">IT & Security</option>
+                                    <option value="Finance">Finance</option>
+                                    <option value="HRD">Human Resource</option>
+                                    <option value="Operations">Operations</option>
+                                    <option value="IT">IT & Security</option>
                                 </select>
                             </div>
 
@@ -156,7 +200,7 @@ const DaftarArsip = () => {
                             {/* Tombol Aksi */}
                             <div className="flex gap-2">
                                 <button className="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm shadow-md hover:bg-blue-700 transition-colors">
-                                    Cari
+                                    Filter
                                 </button>
                                 <button
                                     onClick={handleReset}
@@ -177,58 +221,75 @@ const DaftarArsip = () => {
                                 <thead>
                                     <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
                                         <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nomor Arsip</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Divisi</th>
                                         <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Judul</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Divisi</th>
                                         <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kategori</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pengunggah</th>
                                         <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tgl Upload</th>
                                         <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tgl Dokumen</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tgl Berakhir</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status Retensi</th>
                                         <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Aksi</th>
                                     </tr>
                                 </thead>
 
                                 {/* Table Body */}
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                    {dummyArsip.map((arsip) => (
-                                        <tr key={arsip.id} className="hover:bg-primary/5 transition-colors">
-                                            <td className="px-6 py-4 text-sm font-medium text-primary">{arsip.nomorArsip}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{arsip.divisi}</td>
-                                            <td className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white">{arsip.judul}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{arsip.kategori}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{arsip.tglUpload}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{arsip.tglDokumen}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{arsip.tglBerakhir}</td>
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan="8" className="text-center py-10">
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                                    <p className="text-sm text-gray-500">Memuat data...</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : filteredArchives.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="8" className="text-center py-10 text-gray-500">
+                                                Tidak ada data arsip ditemukan.
+                                            </td>
+                                        </tr>
+                                    ) : filteredArchives.map((arsip) => (
+                                        <tr key={arsip.id} className="hover:bg-primary/5 transition-colors group">
+                                            <td className="px-6 py-4 text-sm font-black text-primary">
+                                                {arsip.nomorArsip || '-'}
+                                            </td>
                                             <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${arsip.statusColor === 'green' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                                        arsip.statusColor === 'red' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
-                                                            'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
-                                                    }`}>
-                                                    {arsip.status}
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{arsip.judul}</span>
+                                                    <span className="text-[10px] text-gray-400 font-medium truncate max-w-50">{arsip.fileName}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">{arsip.divisi}</td>
+                                            <td className="px-6 py-4">
+                                                <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase">
+                                                    {arsip.kategori}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex justify-center gap-2">
-                                                    {/* Tombol View */}
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{arsip.uploaderName || 'Admin'}</span>
+                                                    <span className="text-[9px] text-slate-400 font-medium">{arsip.uploaderEmail || ''}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-xs font-bold text-gray-600 dark:text-gray-300">
+                                                {new Date(arsip.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                            </td>
+                                            <td className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">{arsip.tglDokumen}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex justify-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                                     <button
+                                                        onClick={() => navigate(`/preview/${arsip.id}`)}
                                                         className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 rounded transition-colors"
                                                         title="View"
                                                     >
-                                                        <span className="material-symbols-outlined text-xl">visibility</span>
+                                                        <span className="material-symbols-outlined text-[20px]">visibility</span>
                                                     </button>
-                                                    {/* Tombol Download */}
                                                     <button
-                                                        className="p-1.5 hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 rounded transition-colors"
-                                                        title="Download"
-                                                    >
-                                                        <span className="material-symbols-outlined text-xl">download</span>
-                                                    </button>
-                                                    {/* Tombol Delete */}
-                                                    <button
+                                                        onClick={() => handleDelete(arsip.id, arsip.filePath)}
                                                         className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 rounded transition-colors"
                                                         title="Delete"
                                                     >
-                                                        <span className="material-symbols-outlined text-xl">delete</span>
+                                                        <span className="material-symbols-outlined text-[20px]">delete</span>
                                                     </button>
                                                 </div>
                                             </td>
@@ -241,7 +302,7 @@ const DaftarArsip = () => {
                         {/* ========== PAGINATION ========== */}
                         <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
                             <span className="text-sm text-gray-500 dark:text-gray-400">
-                                Menampilkan 1-3 dari 150 arsip
+                                Menampilkan {filteredArchives.length} dari {archives.length} arsip
                             </span>
                             <div className="flex gap-2">
                                 <button
@@ -262,11 +323,7 @@ const DaftarArsip = () => {
                 </main>
 
                 {/* ========== FOOTER ========== */}
-                <footer className="mt-auto py-6 px-10 border-t border-gray-200 dark:border-gray-800 text-center">
-                    <p className="text-xs text-slate-600 dark:text-gray-500">
-                        © 2026 e-Arsip Digital System. Semua hak cipta dilindungi.
-                    </p>
-                </footer>
+                <Footer />
             </div>
         </div>
     );
@@ -274,46 +331,3 @@ const DaftarArsip = () => {
 
 export default DaftarArsip;
 
-/*
-  ============================================
-  PENJELASAN FITUR:
-  ============================================
-  
-  1. FILTER SECTION:
-     - Search: Cari berdasarkan nomor/nama arsip
-     - Divisi: Filter berdasarkan divisi
-     - Tanggal: Filter berdasarkan tanggal dokumen
-     - Reset: Bersihkan semua filter
-  
-  2. TABEL ARSIP:
-     - 9 kolom informasi lengkap
-     - Status badge dengan warna dinamis
-     - Hover effect pada row
-     - Action buttons (View, Download, Delete)
-  
-  3. PAGINATION:
-     - Navigasi halaman
-     - Info jumlah data yang ditampilkan
-  
-  ============================================
-  NEXT STEPS (Integrasi Firebase):
-  ============================================
-  
-  1. Ganti dummyArsip dengan data dari Firestore:
-     - Collection: 'documents' atau 'arsip'
-     - Real-time listener dengan onSnapshot
-  
-  2. Implementasi filter yang berfungsi:
-     - Filter search dengan includes()
-     - Filter divisi dengan ===
-     - Filter tanggal dengan Date comparison
-  
-  3. Implementasi pagination:
-     - Limit data per halaman (10-20 item)
-     - Next/Previous button logic
-  
-  4. Implementasi action buttons:
-     - View: Modal preview dokumen
-     - Download: Download file dari Storage
-     - Delete: Hapus dokumen (dengan konfirmasi)
-*/

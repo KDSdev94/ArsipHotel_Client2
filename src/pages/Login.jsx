@@ -12,7 +12,6 @@ const Login = () => {
     const navigate = useNavigate();
     const { login } = useAuth(); // Ambil fungsi login dari Context
 
-    // Fungsi login - Sekarang jauh lebih simple!
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
@@ -38,20 +37,21 @@ const Login = () => {
             <div className="flex w-full">
 
                 {/* SISI KIRI: Gambar & Branding (Cuma muncul di layar gede) */}
-                <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-primary">
-                    <div className="absolute inset-0 z-10 login-image-overlay"></div>
-                    {/* Gambar background hotel biar keliatan mewah */}
-                    <div
-                        className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDkOlZkLhawr8efgyHwDAifKQNCFykkWbzpNYSrLfvVLRWAk5XmrT6H9idaLSnoFgmcu0_9uL5wMESgEvQRiQ8D3kZyX3En-EhCVyJbmeBgZOZlof_u1FTFMHWZmR80O1oOXpPlwwouJNHJsRYc00tkmCHsZK4yUUxTLwqrh38dY5dvpy0ZsBuUnqyv_scu4ROKoPECJUPzZlxXWDYVHVgb6ovLR3WxFIDihBAQhd2PBtRmlTXx4sETzDS1B6Iwybn9xp3lS8FnVu5o')" }}
-                    >
+                <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-slate-900">
+                    <div className="absolute inset-0">
+                        <img
+                            src="/background.jpeg"
+                            alt="Hotel Background"
+                            className="w-full h-full object-cover opacity-60"
+                        />
+                        <div className="absolute inset-0 bg-linear-to-t from-[#0f172a] to-transparent opacity-60"></div>
                     </div>
                     <div className="relative z-20 flex flex-col justify-between h-full p-16 text-white">
                         <div className="flex items-center gap-3">
                             <div className="bg-white/10 backdrop-blur-md p-2 rounded-lg border border-white/20">
-                                <img className="w-16 h-16" src="logo_512.png" alt="logo" />
+                                <img className="w-16 h-16" src="/logo_512.png" alt="logo" />
                             </div>
-                            <h2 className="text-2xl font-bold tracking-tight">E-Arsip System
+                            <h2 className="text-2xl font-bold tracking-tight">Arsip Hotel
                             </h2>
                         </div>
                         <div className="max-w-md">
@@ -76,7 +76,7 @@ const Login = () => {
 
                 {/* SISI KANAN: Form Login-nya */}
                 <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white dark:bg-background-dark">
-                    <div className="w-full max-w-[420px] flex flex-col">
+                    <div className="w-full max-w-105 flex flex-col">
                         {/* Logo buat versi Mobile (karena sisi kiri ilang kalo di hp) */}
                         <div className="lg:hidden flex items-center gap-3 mb-12">
                             <div className="bg-primary p-2 rounded-lg shadow-lg shadow-primary/20">
@@ -164,7 +164,7 @@ const Login = () => {
 
                             {/* Tombol Login: Bisa nyesuaiin status loading */}
                             <button
-                                className={`mt-4 flex min-w-[84px] items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-primary hover:bg-primary/90 text-white text-base font-bold leading-normal tracking-[0.015em] transition-all shadow-lg shadow-primary/20 ${loading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
+                                className={`mt-4 flex min-w-21 items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-primary hover:bg-primary/90 text-white text-base font-bold leading-normal tracking-[0.015em] transition-all shadow-lg shadow-primary/20 ${loading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
                                 type="submit"
                                 disabled={loading}
                             >

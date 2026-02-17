@@ -1,8 +1,3 @@
-// ============================================
-// FILE: main.jsx
-// FUNGSI: Pintu masuk utama aplikasi React
-// ============================================
-
 // Import StrictMode dari React
 // StrictMode = Mode ketat yang bantu kita deteksi error/bug saat development
 // Kayak guru yang galak tapi baik - kasih warning kalau ada yang salah
@@ -25,6 +20,8 @@ import App from './App.jsx';
 // Context = Wadah global buat nyimpen data yang bisa diakses dari mana aja
 import { AuthProvider } from './contexts/AuthContext';
 import { FirestoreProvider } from './contexts/FirestoreContext';
+import { SupabaseProvider } from './contexts/SupabaseContext';
+import { UserProfileProvider } from './contexts/UserProfileContext';
 
 // ============================================
 // RENDER APLIKASI KE BROWSER
@@ -43,8 +40,13 @@ createRoot(document.getElementById('root')).render(
       {/* FirestoreProvider = Bungkus app dengan context database */}
       {/* Sekarang semua komponen bisa CRUD ke Firestore */}
       <FirestoreProvider>
-        {/* Komponen App = Isi utama aplikasi kita */}
-        <App />
+        {/* UserProfileProvider = Bungkus app dengan context user profile (role, division) */}
+        <UserProfileProvider>
+          <SupabaseProvider>
+            {/* Komponen App = Isi utama aplikasi kita */}
+            <App />
+          </SupabaseProvider>
+        </UserProfileProvider>
       </FirestoreProvider>
     </AuthProvider>
   </StrictMode>
@@ -72,6 +74,10 @@ createRoot(document.getElementById('root')).render(
   AuthProvider (Context autentikasi)
     ↓
   FirestoreProvider (Context database)
+    ↓
+  UserProfileProvider (Context user profile - role & division)
+    ↓
+  SupabaseProvider (Context Supabase storage)
     ↓
   App (Aplikasi utama)
     ↓
@@ -104,9 +110,9 @@ createRoot(document.getElementById('root')).render(
      ↓
   contexts/AuthContext.jsx (auth logic)
   contexts/FirestoreContext.jsx (database logic)
+  contexts/UserProfileContext.jsx (user profile logic)
      ↓
   App.jsx (routing)
      ↓
   pages/*.jsx (halaman-halaman)
 */
-

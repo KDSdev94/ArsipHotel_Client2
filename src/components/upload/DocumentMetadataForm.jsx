@@ -4,10 +4,19 @@
 // ============================================
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useFirestore } from '../../contexts/FirestoreContext';
+import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useUserProfile } from '../../contexts/UserProfileContext';
 
-const DocumentMetadataForm = () => {
-    const { getDocuments } = useFirestore();
+const DocumentMetadataForm = ({ file, onProgress }) => {
+    const navigate = useNavigate();
+    const { currentUser } = useAuth();
+    const { isAdmin, getUserDivision } = useUserProfile();
+    const { getDocuments, addDocument, getDocument, logActivity } = useFirestore();
+    const { uploadFile, addArchive } = useSupabase();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // ============================================
     // STATE DATA DROPDOWN (DARI FIREBASE)
@@ -23,10 +32,11 @@ const DocumentMetadataForm = () => {
         kategori: '',
         judul: '',
         tglDokumen: new Date().toISOString().split('T')[0], // Default hari ini
-        codeArsip: '', // Auto-generated
         nomorArsip: '', // Manual
-        retensiAktif: '10',
-        retensiInaktif: '5',
+        retensiAktif: '',
+        retensiAktifUnit: 'Tahun',
+        retensiInaktif: '',
+        retensiInaktifUnit: 'Tahun',
         keterangan: ''
     });
 
@@ -42,22 +52,17 @@ const DocumentMetadataForm = () => {
             // Ambil Kategori
             const catRes = await getDocuments('categories');
             if (catRes.success) setCategories(catRes.data);
+
+            // Auto-fill divisi untuk Staf
+            if (!isAdmin()) {
+                const userDivision = getUserDivision();
+                if (userDivision) {
+                    setFormData(prev => ({ ...prev, divisi: userDivision }));
+                }
+            }
         };
         fetchData();
-
-        // Generate Code Arsip saat pertama kali load
-        generateAutoCode();
     }, []);
-
-    // ============================================
-    // FUNGSI AUTO-GENERATE CODE ARSIP
-    // ============================================
-    const generateAutoCode = () => {
-        const year = new Date().getFullYear();
-        const random = Math.floor(1000 + Math.random() * 9000); // 4 digit random
-        const code = `ARS-${year}-${random}`;
-        setFormData(prev => ({ ...prev, codeArsip: code }));
-    };
 
     // Handle perubahan input
     const handleChange = (e) => {
@@ -65,11 +70,79 @@ const DocumentMetadataForm = () => {
         setFormData(prev => ({ ...prev, [id]: value }));
     };
 
-    // Handle Submit
-    const handleSubmit = (e) => {
+    // Handle Submit Dual Save
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Data siap diupload:", formData);
-        alert("Metadata tersimpan! (Logika upload file akan menyusul)");
+
+        if (!file) {
+            alert("Silakan pilih file terlebih dahulu!");
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+            if (onProgress) onProgress(0); // Reset progress ke 0
+
+            // 1. Upload File ke Supabase Storage
+            const uploadRes = await uploadFile(file, onProgress);
+            if (!uploadRes.success) throw new Error(uploadRes.error);
+
+            // 2. Ambil Nama Lengkap dari Firestore (karena Auth displayName sering kosong pas login)
+            let finalName = currentUser?.displayName || 'Admin';
+
+            // Jika nama di Auth kosong, coba ambil dari koleksi 'users' di Firestore
+            if (!currentUser?.displayName || currentUser?.displayName === 'Unknown') {
+                const userProfile = await getDocument('users', currentUser.uid);
+                if (userProfile.success && userProfile.data.name) {
+                    finalName = userProfile.data.name;
+                }
+            }
+
+            const completeData = {
+                ...formData,
+                fileUrl: uploadRes.url,
+                filePath: uploadRes.path,
+                fileName: file.name,
+                fileSize: file.size,
+                fileType: file.type,
+                uploaderName: finalName,
+                uploaderEmail: currentUser?.email || 'Unknown'
+            };
+
+            // 3. Simpan Record ke Supabase DB
+            const supabaseRes = await addArchive(completeData);
+            if (!supabaseRes.success) throw new Error(supabaseRes.error);
+
+            // 4. Simpan Metadata & Relasi ke Firestore (Firebase)
+            const firestoreRes = await addDocument('archives', {
+                ...completeData,
+                supabaseId: supabaseRes.data.id, // Simpan ID relasi
+                source: 'SUPABASE_STORAGE'
+            });
+
+            // 5. Catat Laporan Aktivitas ke Firestore
+            await logActivity({
+                user: finalName,
+                email: currentUser?.email || 'Unknown',
+                action: 'Mengunggah',
+                documentName: formData.judul,
+                status: 'Berhasil',
+                type: 'upload'
+            });
+
+            if (firestoreRes.success) {
+                alert("Arsip Berhasil Disimpan!");
+                navigate('/daftar-arsip');
+            } else {
+                throw new Error(firestoreRes.error);
+            }
+
+        } catch (error) {
+            alert("Terjadi kesalahan: " + error.message);
+            console.error(error);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -87,7 +160,8 @@ const DocumentMetadataForm = () => {
                         <label className="block text-[11px] font-black uppercase text-slate-500 tracking-widest" htmlFor="divisi">Divisi</label>
                         <select
                             required
-                            className="w-full rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary shadow-sm text-sm font-bold py-3"
+                            disabled={!isAdmin()} // Staf tidak bisa ubah divisi
+                            className={`w-full rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary shadow-sm text-sm font-bold py-3 ${!isAdmin() ? 'opacity-60 cursor-not-allowed' : ''}`}
                             id="divisi"
                             value={formData.divisi}
                             onChange={handleChange}
@@ -97,6 +171,9 @@ const DocumentMetadataForm = () => {
                                 <option key={div.id} value={div.name}>{div.name}</option>
                             ))}
                         </select>
+                        {!isAdmin() && (
+                            <p className="text-[10px] text-slate-400 italic">* Divisi otomatis terisi sesuai profil Anda</p>
+                        )}
                     </div>
                     <div className="space-y-2">
                         <label className="block text-[11px] font-black uppercase text-slate-500 tracking-widest" htmlFor="kategori">Kategori Arsip</label>
@@ -156,52 +233,53 @@ const DocumentMetadataForm = () => {
                     </div>
                 </div>
 
-                {/* BARIS 4: AUTO CODE (DISABLED) */}
-                <div className="space-y-2">
-                    <label className="block text-[11px] font-black uppercase text-slate-500 tracking-widest" htmlFor="codeArsip">System Code Arsip (Auto)</label>
-                    <div className="relative">
-                        <input
-                            disabled
-                            className="w-full rounded-xl border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-slate-800 dark:text-slate-400 text-slate-500 focus:ring-0 shadow-sm text-sm font-black py-3 px-4 italic"
-                            id="codeArsip"
-                            type="text"
-                            value={formData.codeArsip}
-                        />
-                        <span className="absolute right-4 top-3 material-symbols-outlined text-slate-300 text-sm">lock</span>
-                    </div>
-                </div>
+
 
                 {/* BARIS 5: MASA RETENSI */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <label className="block text-[11px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-widest">Masa Retensi Aktif</label>
+                        <label className="block text-[11px] font-black uppercase text-slate-500 tracking-widest" htmlFor="retensiAktif">Masa Retensi (Aktif)</label>
                         <div className="flex gap-2">
                             <input
-                                className="flex-1 rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:ring-primary py-2.5 px-4 text-sm font-bold"
+                                className="flex-1 rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary shadow-sm text-sm font-bold py-3 px-4"
                                 id="retensiAktif"
+                                placeholder="Durasi"
                                 type="number"
-                                min="1"
                                 value={formData.retensiAktif}
                                 onChange={handleChange}
                             />
-                            <select className="bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700 rounded-xl text-xs font-bold px-3">
-                                <option>Tahun</option>
+                            <select
+                                className="w-32 rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary shadow-sm text-sm font-bold py-3"
+                                id="retensiAktifUnit"
+                                value={formData.retensiAktifUnit}
+                                onChange={handleChange}
+                            >
+                                <option value="Tahun">Tahun</option>
+                                <option value="Bulan">Bulan</option>
+                                <option value="Hari">Hari</option>
                             </select>
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="block text-[11px] font-black uppercase text-amber-600 dark:text-amber-400 tracking-widest">Masa Retensi Inaktif</label>
+                        <label className="block text-[11px] font-black uppercase text-slate-500 tracking-widest" htmlFor="retensiInaktif">Masa Retensi (Inaktif)</label>
                         <div className="flex gap-2">
                             <input
-                                className="flex-1 rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:ring-primary py-2.5 px-4 text-sm font-bold"
+                                className="flex-1 rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary shadow-sm text-sm font-bold py-3 px-4"
                                 id="retensiInaktif"
+                                placeholder="Durasi"
                                 type="number"
-                                min="1"
                                 value={formData.retensiInaktif}
                                 onChange={handleChange}
                             />
-                            <select className="bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700 rounded-xl text-xs font-bold px-3">
-                                <option>Tahun</option>
+                            <select
+                                className="w-32 rounded-xl border-slate-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary shadow-sm text-sm font-bold py-3"
+                                id="retensiInaktifUnit"
+                                value={formData.retensiInaktifUnit}
+                                onChange={handleChange}
+                            >
+                                <option value="Tahun">Tahun</option>
+                                <option value="Bulan">Bulan</option>
+                                <option value="Hari">Hari</option>
                             </select>
                         </div>
                     </div>
@@ -229,11 +307,21 @@ const DocumentMetadataForm = () => {
                         Batal
                     </button>
                     <button
-                        className="px-10 py-3 rounded-xl bg-primary text-white font-black text-sm shadow-lg shadow-primary/20 hover:bg-blue-700 hover:shadow-primary/40 transition-all active:scale-95 flex items-center gap-2"
+                        className={`px-10 py-3 rounded-xl bg-primary text-white font-black text-sm shadow-lg shadow-primary/20 hover:bg-blue-700 hover:shadow-primary/40 transition-all active:scale-95 flex items-center gap-2 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
                         type="submit"
+                        disabled={isSubmitting}
                     >
-                        <span className="material-symbols-outlined text-[20px]">cloud_upload</span>
-                        Simpan Arsip
+                        {isSubmitting ? (
+                            <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                Menyimpan...
+                            </>
+                        ) : (
+                            <>
+                                <span className="material-symbols-outlined text-[20px]">cloud_upload</span>
+                                Simpan Arsip
+                            </>
+                        )}
                     </button>
                 </div>
             </form>

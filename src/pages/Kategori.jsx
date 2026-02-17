@@ -4,17 +4,21 @@
 // FITUR: CRUD (Tambah, Edit, Hapus) kategori arsip
 // ============================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import NavigasiSamping from '../components/dashboard/sidebar/NavigasiSamping';
 import { useFirestore } from '../contexts/FirestoreContext';
+import { useSupabase } from '../contexts/SupabaseContext';
+import Footer from '../components/dashboard/umum/Footer';
 
 const Kategori = () => {
     // ============================================
     // STATE MANAGEMENT
     // ============================================
     const { subscribeToCollection, addDocument, updateDocument, deleteDocument } = useFirestore();
+    const { getArchives } = useSupabase();
 
     const [categories, setCategories] = useState([]);
+    const [archives, setArchives] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -27,6 +31,14 @@ const Kategori = () => {
         count: 0
     });
 
+    const fetchData = async () => {
+        // Ambil data arsip buat ngitung jumlah rill per kategori
+        const arcResult = await getArchives();
+        if (arcResult.success) {
+            setArchives(arcResult.data);
+        }
+    };
+
     // ============================================
     // AMBIL DATA REAL-TIME
     // ============================================
@@ -37,11 +49,25 @@ const Kategori = () => {
             setLoading(false);
         });
 
+        fetchData();
+
+        // Auto Refresh
+        window.addEventListener('focus', fetchData);
+
         // Cleanup: Berhenti dengerin data pas pindah halaman
         return () => {
             if (unsubscribe) unsubscribe();
+            window.removeEventListener('focus', fetchData);
         };
     }, []);
+
+    // Gabungkan data kategori dengan hitungan rill dari archives
+    const categoriesWithCount = useMemo(() => {
+        return categories.map(cat => {
+            const realCount = archives.filter(arc => arc.kategori === cat.name).length;
+            return { ...cat, realCount };
+        });
+    }, [categories, archives]);
 
     // ============================================
     // FUNGSI MODAL
@@ -123,9 +149,9 @@ const Kategori = () => {
                     </div>
                 </header>
 
-                <main className="flex-1 p-8 w-full max-w-[1440px] mx-auto">
+                <main className="flex-1 p-8 w-full max-w-360 mx-auto">
                     {/* ========== KOMPONEN TAHANAN (CONTENT CARD) ========== */}
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-gray-200 dark:border-gray-700 min-h-[600px]">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-gray-200 dark:border-gray-700 min-h-150">
 
                         <div className="flex items-center justify-between mb-8">
                             <div>
@@ -161,8 +187,8 @@ const Kategori = () => {
                                                 <div className="size-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div>
                                             </td>
                                         </tr>
-                                    ) : categories.length > 0 ? (
-                                        categories.map((cat, index) => (
+                                    ) : categoriesWithCount.length > 0 ? (
+                                        categoriesWithCount.map((cat, index) => (
                                             <tr key={cat.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-all">
                                                 <td className="py-5 px-4 text-sm font-bold text-slate-400 text-center">{index + 1}</td>
                                                 <td className="py-5 px-4">
@@ -173,7 +199,7 @@ const Kategori = () => {
                                                 </td>
                                                 <td className="py-5 px-4">
                                                     <button className="text-primary hover:underline text-sm font-bold">
-                                                        {cat.count || 0} Dokumen
+                                                        {cat.realCount || 0} Dokumen
                                                     </button>
                                                 </td>
                                                 <td className="py-5 px-4">
@@ -204,11 +230,12 @@ const Kategori = () => {
                         </div>
                     </div>
                 </main>
+                <Footer />
             </div>
 
             {/* ========== MODAL FORM ========== */}
             {showModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
                     <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
                         {/* Modal Header */}
                         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">

@@ -7,7 +7,7 @@ const TabelPengguna = ({ users = [], totalCount = 0, onEdit, onDelete }) => {
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                            <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Karyawan</th>
+                            <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Nama</th>
                             <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Peran & Akses</th>
                             <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Divisi</th>
                             <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Status</th>

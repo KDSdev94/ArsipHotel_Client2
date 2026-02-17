@@ -1,36 +1,83 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
-const StatistikLaporan = () => {
-    const stats = [
-        {
-            label: 'Total Dokumen',
-            value: '12,450',
-            change: '+5.2%',
-            isPositive: true,
-            icon: 'folder_open',
-            color: 'blue',
-            progress: 75
-        },
-        {
-            label: 'Dokumen Baru (Bulan Ini)',
-            value: '842',
-            change: '+12.4%',
-            isPositive: true,
-            icon: 'new_releases',
-            color: 'emerald',
-            subtext: 'Dibandingkan bulan sebelumnya'
-        },
-        {
-            label: 'Kapasitas Penyimpanan',
-            value: '15.4',
-            totalValue: '/ 50 GB',
-            change: 'Sisa 34.6 GB',
-            isPositive: null,
-            icon: 'storage',
-            color: 'amber',
-            progress: 31
-        }
-    ];
+const StatistikLaporan = ({ archives = [] }) => {
+    // Hitung statistik dari data real
+    const stats = useMemo(() => {
+        const totalDokumen = archives.length;
+
+        // Hitung dokumen bulan ini
+        const now = new Date();
+        const thisMonth = now.getMonth();
+        const thisYear = now.getFullYear();
+
+        const dokumenBulanIni = archives.filter(arsip => {
+            const createdDate = new Date(arsip.created_at);
+            return createdDate.getMonth() === thisMonth && createdDate.getFullYear() === thisYear;
+        }).length;
+
+        // Hitung dokumen bulan lalu untuk perbandingan
+        const lastMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+        const lastMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+
+        const dokumenBulanLalu = archives.filter(arsip => {
+            const createdDate = new Date(arsip.created_at);
+            return createdDate.getMonth() === lastMonth && createdDate.getFullYear() === lastMonthYear;
+        }).length;
+
+        // Hitung persentase perubahan
+        const changePercent = dokumenBulanLalu > 0
+            ? ((dokumenBulanIni - dokumenBulanLalu) / dokumenBulanLalu * 100).toFixed(1)
+            : 0;
+
+        // Hitung total ukuran file (Supabase Free Tier tracking)
+        const totalSizeBytes = archives.reduce((sum, arsip) => sum + (arsip.fileSize || 0), 0);
+        const totalSizeMB = (totalSizeBytes / (1024 * 1024)); // Ukuran dalam MB
+        const maxStorageMB = 1024; // Limit Supabase Free Tier (1 GB = 1024 MB)
+
+        const storagePercent = Math.min(((totalSizeMB / maxStorageMB) * 100), 100).toFixed(1);
+        const sisaMB = (maxStorageMB - totalSizeMB);
+
+        // Format Tampilan (Ganti ke GB kalau udah gede)
+        const displayUsage = totalSizeMB > 500
+            ? `${(totalSizeMB / 1024).toFixed(2)} GB`
+            : `${totalSizeMB.toFixed(1)} MB`;
+
+        const displayLimit = maxStorageMB >= 1024 ? '1 GB' : `${maxStorageMB} MB`;
+        const displaySisa = sisaMB > 500
+            ? `${(sisaMB / 1024).toFixed(2)} GB`
+            : `${sisaMB.toFixed(1)} MB`;
+
+        return [
+            {
+                label: 'Total Dokumen',
+                value: totalDokumen.toLocaleString('id-ID'),
+                change: `${totalDokumen} arsip`,
+                isPositive: null,
+                icon: 'folder_open',
+                color: 'blue',
+                progress: Math.min((totalDokumen / 100) * 100, 100)
+            },
+            {
+                label: 'Dokumen Baru (Bulan Ini)',
+                value: dokumenBulanIni.toLocaleString('id-ID'),
+                change: `${changePercent >= 0 ? '+' : ''}${changePercent}%`,
+                isPositive: changePercent >= 0,
+                icon: 'new_releases',
+                color: 'emerald',
+                subtext: 'Dibandingkan bulan sebelumnya'
+            },
+            {
+                label: 'Kapasitas Penyimpanan',
+                value: displayUsage,
+                totalValue: `/ ${displayLimit}`,
+                change: `Sisa ${displaySisa}`,
+                isPositive: null,
+                icon: 'storage',
+                color: 'amber',
+                progress: parseFloat(storagePercent)
+            }
+        ];
+    }, [archives]);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -59,7 +106,7 @@ const StatistikLaporan = () => {
                     <h2 className="text-3xl font-black mt-1">
                         {stat.value} {stat.totalValue && <span className="text-lg font-bold text-slate-400">{stat.totalValue}</span>}
                     </h2>
-                    {stat.progress ? (
+                    {stat.progress !== undefined ? (
                         <div className="mt-4 w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
                             <div
                                 className={`h-full rounded-full transition-all duration-500 ${stat.color === 'blue' ? 'bg-primary' : 'bg-amber-500'}`}
