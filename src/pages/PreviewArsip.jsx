@@ -8,7 +8,7 @@ import { useFirestore } from '../contexts/FirestoreContext';
 const PreviewArsip = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { getArchives, deleteArchive } = useSupabase();
+    const { getArchives, softDeleteArchive } = useSupabase();
     const { currentUser } = useAuth();
     const { deleteDocumentBySupabaseId, logActivity, getDocument } = useFirestore(); // Tambah Firestore context
     const [arsip, setArsip] = useState(null);
@@ -29,14 +29,11 @@ const PreviewArsip = () => {
     }, [id, getArchives]);
 
     const handleDelete = async () => {
-        if (window.confirm("Apakah Anda yakin ingin menghapus arsip ini?")) {
-            // 1. Hapus dari Supabase
-            const result = await deleteArchive(id, arsip.filePath);
+        if (window.confirm("Apakah Anda yakin ingin memindahkan arsip ini ke tempat sampah?")) {
+            // 1. Soft Delete di Supabase
+            const result = await softDeleteArchive(id);
             if (result.success) {
-                // 2. Hapus dari Firestore (Sync)
-                await deleteDocumentBySupabaseId('archives', id);
-
-                // 3. Catat Laporan Aktivitas Hapus ke Firestore
+                // 2. Catat Laporan Aktivitas ke Firestore
                 let finalName = currentUser?.displayName || 'Admin';
                 if (!currentUser?.displayName || currentUser?.displayName === 'Unknown') {
                     const userProfile = await getDocument('users', currentUser?.uid);
@@ -48,16 +45,16 @@ const PreviewArsip = () => {
                 await logActivity({
                     user: finalName,
                     email: currentUser?.email || 'Unknown',
-                    action: 'Menghapus',
+                    action: 'Memindahkan ke Sampah',
                     documentName: arsip.judul || 'Dokumen',
                     status: 'Berhasil',
                     type: 'delete'
                 });
 
-                alert("Arsip berhasil dihapus!");
+                alert("Arsip dipindahkan ke tempat sampah!");
                 navigate('/daftar-arsip');
             } else {
-                alert("Gagal menghapus: " + result.error);
+                alert("Gagal memindahkan: " + result.error);
             }
         }
     };

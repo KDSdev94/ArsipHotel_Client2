@@ -72,6 +72,7 @@ export const SupabaseProvider = ({ children }) => {
             const { data, error } = await supabase
                 .from('archives')
                 .select('*')
+                .or('is_deleted.is.null,is_deleted.eq.false')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -89,6 +90,7 @@ export const SupabaseProvider = ({ children }) => {
                 .from('archives')
                 .select('*')
                 .eq('divisi', division)
+                .or('is_deleted.is.null,is_deleted.eq.false')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -99,20 +101,99 @@ export const SupabaseProvider = ({ children }) => {
         }
     };
 
+    const getDeletedArchives = async (division = null) => {
+        try {
+            let query = supabase
+                .from('archives')
+                .select('*')
+                .eq('is_deleted', true);
+
+            if (division) {
+                query = query.eq('divisi', division);
+            }
+
+            const { data, error } = await query.order('deleted_at', { ascending: false });
+
+            if (error) throw error;
+            return { success: true, data };
+        } catch (error) {
+            console.error('Error getting deleted archives:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
     const updateArchive = async (id, data) => {
         try {
-            const { error } = await supabase
+            const { data: result, error } = await supabase
                 .from('archives')
                 .update({
                     ...data,
                     updated_at: new Date().toISOString()
                 })
-                .eq('id', id);
+                .eq('id', id)
+                .select();
 
             if (error) throw error;
+            if (!result || result.length === 0) {
+                return { success: false, error: 'Gagal memperbarui: Data tidak ditemukan atau terhalang izin RLS.' };
+            }
             return { success: true };
         } catch (error) {
             console.error('Error updating archive:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
+    const softDeleteArchive = async (id) => {
+        try {
+            console.log('Memproses soft delete untuk ID:', id);
+            const { data: result, error, status } = await supabase
+                .from('archives')
+                .update({
+                    is_deleted: true,
+                    deleted_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', id)
+                .select();
+
+            if (error) {
+                console.error('Supabase Error:', error);
+                throw error;
+            }
+
+            console.log('Status HTTP:', status);
+            console.log('Hasil Update:', result);
+
+            if (!result || result.length === 0) {
+                return { success: false, error: 'Gagal memindahkan ke sampah: Data tidak ditemukan atau terhalang izin RLS. (Cek tabel archives di Supabase)' };
+            }
+            return { success: true };
+        } catch (error) {
+            console.error('Error soft deleting archive:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
+    const restoreArchive = async (id) => {
+        try {
+            const { data: result, error } = await supabase
+                .from('archives')
+                .update({
+                    is_deleted: false,
+                    deleted_at: null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', id)
+                .select();
+
+            if (error) throw error;
+            if (!result || result.length === 0) {
+                return { success: false, error: 'Gagal memulihkan: Data tidak ditemukan atau terhalang izin RLS.' };
+            }
+            return { success: true };
+        } catch (error) {
+            console.error('Error restoring archive:', error);
             return { success: false, error: error.message };
         }
     };
@@ -160,7 +241,10 @@ export const SupabaseProvider = ({ children }) => {
         addArchive,
         getArchives,
         getArchivesByDivision,
+        getDeletedArchives,
         updateArchive,
+        softDeleteArchive,
+        restoreArchive,
         deleteArchive
     };
 

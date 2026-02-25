@@ -16,9 +16,9 @@ const DaftarArsip = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { currentUser } = useAuth();
-    const { getArchives, getArchivesByDivision, deleteArchive } = useSupabase();
+    const { getArchives, getArchivesByDivision, softDeleteArchive } = useSupabase();
     const { isAdmin, getUserDivision } = useUserProfile();
-    const { deleteDocumentBySupabaseId, logActivity, getDocument } = useFirestore();
+    const { logActivity, getDocument } = useFirestore();
     const [archives, setArchives] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -63,22 +63,19 @@ const DaftarArsip = () => {
         return () => window.removeEventListener('focus', fetchArchives);
     }, [location.pathname, fetchArchives]);
 
-    // Handle Delete (Synced with Firestore)
-    const handleDelete = async (id, filePath) => {
+    // Handle Delete (Soft Delete - Moved to Trash)
+    const handleDelete = async (id) => {
         // Cari data arsip sebelum dihapus buat logging
         const archiveToDelete = archives.find(a => a.id === id);
 
-        if (window.confirm("Apakah Anda yakin ingin menghapus arsip ini?")) {
-            // 1. Hapus dari Supabase
-            const result = await deleteArchive(id, filePath);
-            if (result.success) {
-                // 2. Hapus juga dari Firestore secara background (sync)
-                await deleteDocumentBySupabaseId('archives', id);
+        if (window.confirm("Apakah Anda yakin ingin memindahkan arsip ini ke tempat sampah?")) {
+            // 1. Soft Delete di Supabase
+            const result = await softDeleteArchive(id);
 
-                // 3. Catat Laporan Aktivitas Hapus ke Firestore
+            if (result.success) {
+                // 2. Catat Laporan Aktivitas ke Firestore
                 let finalName = currentUser?.displayName || 'Admin';
 
-                // Jika nama di Auth kosong, ambil dari koleksi 'users' di Firestore
                 if (!currentUser?.displayName || currentUser?.displayName === 'Unknown') {
                     const userProfile = await getDocument('users', currentUser?.uid);
                     if (userProfile.success && userProfile.data.name) {
@@ -89,16 +86,16 @@ const DaftarArsip = () => {
                 await logActivity({
                     user: finalName,
                     email: currentUser?.email || 'Unknown',
-                    action: 'Menghapus',
+                    action: 'Memindahkan ke Sampah',
                     documentName: archiveToDelete?.judul || 'Dokumen',
                     status: 'Berhasil',
                     type: 'delete'
                 });
 
-                alert("Arsip berhasil dihapus!");
+                alert("Arsip dipindahkan ke tempat sampah!");
                 setArchives(prev => prev.filter(item => item.id !== id));
             } else {
-                alert("Gagal menghapus: " + result.error);
+                alert("Gagal memindahkan: " + result.error);
             }
         }
     };

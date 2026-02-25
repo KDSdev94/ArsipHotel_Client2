@@ -6,6 +6,7 @@ const Login = () => {
   // State untuk form
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -156,18 +157,22 @@ const Login = () => {
                     </span>
                   </div>
                   <input
-                    className="flex w-full pl-11 rounded-lg text-[#111318] dark:text-white dark:bg-gray-800/50 border border-[#dbdfe6] dark:border-gray-700 focus:outline-0 focus:ring-2 focus:ring-primary/20 focus:border-primary h-12 placeholder:text-[#616f89] text-base font-normal leading-normal transition-all"
+                    className="flex w-full pl-11 pr-12 rounded-lg text-[#111318] dark:text-white dark:bg-gray-800/50 border border-[#dbdfe6] dark:border-gray-700 focus:outline-0 focus:ring-2 focus:ring-primary/20 focus:border-primary h-12 placeholder:text-[#616f89] text-base font-normal leading-normal transition-all"
                     placeholder="Masukkan kata sandi"
                     required
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer">
-                    <span className="material-symbols-outlined text-[#616f89] text-[20px]">
-                      visibility
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#616f89] hover:text-primary transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">
+                      {showPassword ? "visibility_off" : "visibility"}
                     </span>
-                  </div>
+                  </button>
                 </div>
               </div>
 

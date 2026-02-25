@@ -7,8 +7,8 @@ import { useAuth } from '../../../contexts/AuthContext';
 const TabelDokumen = ({ data, loading: externalLoading, onDeleteSuccess }) => {
     const navigate = useNavigate();
     const { currentUser } = useAuth();
-    const { getArchives, deleteArchive } = useSupabase();
-    const { deleteDocumentBySupabaseId, logActivity, getDocument } = useFirestore();
+    const { getArchives, softDeleteArchive } = useSupabase();
+    const { logActivity, getDocument } = useFirestore();
     const [internalArchives, setInternalArchives] = useState([]);
     const [internalLoading, setInternalLoading] = useState(true);
 
@@ -32,18 +32,15 @@ const TabelDokumen = ({ data, loading: externalLoading, onDeleteSuccess }) => {
         }
     }, [data, fetchArchives]);
 
-    const handleDelete = async (id, filePath) => {
+    const handleDelete = async (id) => {
         const archives = data || internalArchives;
         const archiveToDelete = archives.find(a => a.id === id);
 
-        if (window.confirm("Apakah Anda yakin ingin menghapus arsip ini?")) {
-            // 1. Hapus dari Supabase
-            const result = await deleteArchive(id, filePath);
+        if (window.confirm("Apakah Anda yakin ingin memindahkan arsip ini ke tempat sampah?")) {
+            // 1. Soft Delete di Supabase
+            const result = await softDeleteArchive(id);
             if (result.success) {
-                // 2. Hapus dari Firestore (Sync)
-                await deleteDocumentBySupabaseId('archives', id);
-
-                // 3. Catat Laporan Aktivitas Hapus ke Firestore
+                // 2. Catat Laporan Aktivitas ke Firestore
                 let finalName = currentUser?.displayName || 'Admin';
                 if (!currentUser?.displayName || currentUser?.displayName === 'Unknown') {
                     const userProfile = await getDocument('users', currentUser?.uid);
@@ -55,17 +52,17 @@ const TabelDokumen = ({ data, loading: externalLoading, onDeleteSuccess }) => {
                 await logActivity({
                     user: finalName,
                     email: currentUser?.email || 'Unknown',
-                    action: 'Menghapus',
+                    action: 'Memindahkan ke Sampah',
                     documentName: archiveToDelete?.judul || 'Dokumen',
                     status: 'Berhasil',
                     type: 'delete'
                 });
 
-                alert("Arsip berhasil dihapus!");
+                alert("Arsip dipindahkan ke tempat sampah!");
                 if (onDeleteSuccess) onDeleteSuccess(id);
                 else fetchArchives();
             } else {
-                alert("Gagal menghapus: " + result.error);
+                alert("Gagal memindahkan: " + result.error);
             }
         }
     };

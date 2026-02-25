@@ -23,6 +23,7 @@ import GantiPassword from './pages/GantiPassword'; // Halaman ganti password
 import Reports from './pages/Reports'; // Halaman lihat laporan
 import Profile from './pages/Profile'; // Halaman profil pengguna
 import PreviewArsip from './pages/PreviewArsip'; // Halaman pratinjau dokumen
+import Trash from './pages/Trash'; // Halaman tempat sampah
 
 import './App.css'; // File CSS khusus buat styling App
 
@@ -80,6 +81,9 @@ function App() {
 
         {/* Route Preview - Lihat detail dan pratinjau arsip */}
         <Route path="/preview/:id" element={<PreviewArsip />} />
+
+        {/* Route Trash - Lihat arsip yang dihapus */}
+        <Route path="/trash" element={<Trash />} />
 
 
         {/* ========== DEFAULT ROUTE ========== */}

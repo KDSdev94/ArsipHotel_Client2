@@ -45,7 +45,8 @@ const NavigasiSamping = () => {
                     isDropdown: true,
                     subMenu: [
                         { icon: 'inventory_2', label: 'Daftar Arsip', path: '/daftar-arsip' },
-                        { icon: 'upload_file', label: 'Upload Baru', path: '/upload' }
+                        { icon: 'upload_file', label: 'Upload Baru', path: '/upload' },
+                        { icon: 'delete', label: 'Tempat Sampah', path: '/trash' }
                     ]
                 },
                 // Laporan bisa diakses oleh semua role
@@ -65,7 +66,7 @@ const NavigasiSamping = () => {
     ];
 
     // Cek apakah salah satu submenu Arsip sedang aktif
-    const isArsipActive = location.pathname === '/daftar-arsip' || location.pathname === '/upload';
+    const isArsipActive = ['/daftar-arsip', '/upload', '/trash'].includes(location.pathname);
 
     return (
         <aside className="w-full h-full bg-[#0f172a] text-slate-300 flex flex-col overflow-hidden">
