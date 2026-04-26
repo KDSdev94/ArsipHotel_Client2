@@ -5,7 +5,7 @@
 // ============================================
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth } from '../firebase/config';
+import { auth, db } from '../firebase/config';
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
@@ -15,6 +15,8 @@ import {
     updatePassword,
     onAuthStateChanged
 } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { isUserAccountActive } from '../utils/accessControl';
 
 // ============================================
 // BUAT CONTEXT
@@ -55,6 +57,26 @@ export const AuthProvider = ({ children }) => {
         try {
             // Panggil Firebase Auth buat login
             const result = await signInWithEmailAndPassword(auth, email, password);
+            const profileRef = doc(db, 'users', result.user.uid);
+            const profileSnap = await getDoc(profileRef);
+
+            if (!profileSnap.exists()) {
+                await signOut(auth);
+                return {
+                    success: false,
+                    error: 'Akun belum diaktifkan admin. Silakan tunggu approval terlebih dahulu.'
+                };
+            }
+
+            const profileData = profileSnap.data();
+            if (!isUserAccountActive(profileData)) {
+                await signOut(auth);
+                return {
+                    success: false,
+                    error: 'Akun Anda sedang nonaktif. Hubungi admin hotel untuk bantuan.'
+                };
+            }
+
             return { success: true, user: result.user };
         } catch (error) {
             // Tangkap error dan kasih pesan yang jelas

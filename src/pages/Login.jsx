@@ -37,7 +37,7 @@ const Login = () => {
     <div className="flex min-h-screen bg-background-light dark:bg-background-dark font-display text-[#111318] dark:text-white transition-colors duration-200">
       <div className="flex flex-col lg:flex-row w-full">
         {/* SISI KIRI (Desktop) / SISI ATAS (Mobile): Gambar & Branding */}
-        <div className="flex lg:w-1/2 relative overflow-hidden bg-slate-900 min-h-[300px] lg:min-h-screen">
+        <div className="flex lg:w-1/2 relative overflow-hidden bg-slate-900 min-h-75 lg:min-h-screen">
           <div className="absolute inset-0">
             <img
               src="/background.jpeg"
@@ -50,14 +50,23 @@ const Login = () => {
             <div className="flex items-center justify-between lg:justify-start gap-3 w-full">
               <div className="flex items-center gap-3">
                 <div className="bg-white/10 backdrop-blur-md p-1.5 lg:p-2 rounded-lg border border-white/20">
-                  <img className="w-10 h-10 lg:w-16 lg:h-16" src="/logo_512.png" alt="logo" />
+                  <img
+                    className="w-10 h-10 lg:w-16 lg:h-16"
+                    src="/logo_512.png"
+                    alt="logo"
+                  />
                 </div>
-                <h2 className="text-xl lg:text-2xl font-bold tracking-tight">Arsip Hotel</h2>
+                <h2 className="text-xl lg:text-2xl font-bold tracking-tight">
+                  Arsip Hotel
+                </h2>
               </div>
 
               {/* Tombol Masuk tambahan buat mobile biar mirip screenshot */}
               <div className="lg:hidden">
-                <Link to="/register" className="px-4 py-1.5 bg-black rounded-full text-xs font-bold">
+                <Link
+                  to="/register"
+                  className="px-4 py-1.5 bg-black rounded-full text-xs font-bold"
+                >
                   Masuk
                 </Link>
               </div>
@@ -215,7 +224,9 @@ const Login = () => {
               </button>
 
               <div className="text-center mt-2">
-                <p className="text-sm text-[#616f89] dark:text-gray-400">Login Instan</p>
+                <p className="text-sm text-[#616f89] dark:text-gray-400">
+                  Login Instan
+                </p>
               </div>
             </form>
 

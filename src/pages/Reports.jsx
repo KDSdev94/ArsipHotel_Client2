@@ -10,16 +10,32 @@ import { useSupabase } from '../contexts/SupabaseContext';
 import { useFirestore } from '../contexts/FirestoreContext';
 import { useAuth } from '../contexts/AuthContext';
 import { exportToCSV } from '../utils/exportUtils';
+import { resolveActivityDivisionScope, timestampToMillis } from '../utils/accessControl';
 
 const Reports = () => {
     const location = useLocation();
-    const { isAdmin, getUserDivision } = useUserProfile();
+    const { isAdmin, getUserDivision, getVisibleDivisions, userProfile } = useUserProfile();
     const { currentUser } = useAuth();
     const { getArchives, getArchivesByDivision } = useSupabase();
-    const { getDocuments, orderByQuery, limitQuery, getDocument, logActivity } = useFirestore();
+    const { getDocuments, orderByQuery, limitQuery, getDocument, logActivity, whereQuery } = useFirestore();
     const [archives, setArchives] = useState([]);
     const [activities, setActivities] = useState([]);
+    const [divisions, setDivisions] = useState([]);
+    const [selectedDivision, setSelectedDivision] = useState('');
     const [loading, setLoading] = useState(true);
+
+    const scopedDivision = isAdmin() ? selectedDivision : getUserDivision();
+
+    useEffect(() => {
+        const fetchDivisions = async () => {
+            const result = await getDocuments('divisions');
+            if (result.success) {
+                setDivisions(getVisibleDivisions(result.data));
+            }
+        };
+
+        fetchDivisions();
+    }, [getDocuments, getVisibleDivisions]);
 
     const handleExport = async () => {
         const columns = [
@@ -33,7 +49,9 @@ const Reports = () => {
             { key: 'fileSize', label: 'Ukuran (Bytes)' }
         ];
 
-        const fileName = isAdmin() ? 'Laporan_Arsip_Semua' : `Laporan_Arsip_${getUserDivision()}`;
+        const fileName = scopedDivision
+            ? `Laporan_Arsip_${scopedDivision}`
+            : 'Laporan_Arsip_Semua';
         exportToCSV(archives, fileName, columns);
 
         // Ambil Nama Lengkap Terkini
@@ -52,7 +70,12 @@ const Reports = () => {
             action: 'Ekspor CSV',
             documentName: fileName,
             status: 'Berhasil',
-            type: 'export'
+            type: 'export',
+            actorDivision: getUserDivision(),
+            divisionScope: resolveActivityDivisionScope({
+                selectedDivision: scopedDivision,
+                profile: userProfile
+            })
         });
     };
 
@@ -61,15 +84,12 @@ const Reports = () => {
 
         // 1. Ambil Data Arsip
         let arcResult;
-        if (isAdmin()) {
+        if (scopedDivision) {
+            arcResult = await getArchivesByDivision(scopedDivision);
+        } else if (isAdmin()) {
             arcResult = await getArchives();
         } else {
-            const userDivision = getUserDivision();
-            if (userDivision) {
-                arcResult = await getArchivesByDivision(userDivision);
-            } else {
-                arcResult = { success: true, data: [] };
-            }
+            arcResult = { success: true, data: [] };
         }
 
         if (arcResult.success) {
@@ -77,17 +97,30 @@ const Reports = () => {
         }
 
         // 2. Ambil Data Aktivitas dari Firestore (Real Logs)
-        const actResult = await getDocuments('activities', [
-            orderByQuery('timestamp', 'desc'),
-            limitQuery(10)
-        ]);
+        const activityConstraints = scopedDivision
+            ? [whereQuery('divisionScope', '==', scopedDivision)]
+            : [orderByQuery('timestamp', 'desc'), limitQuery(25)];
+
+        const actResult = await getDocuments('activities', activityConstraints);
 
         if (actResult.success) {
-            setActivities(actResult.data);
+            const normalizedActivities = [...actResult.data]
+                .sort((left, right) => timestampToMillis(right.timestamp) - timestampToMillis(left.timestamp))
+                .slice(0, 10);
+            setActivities(normalizedActivities);
         }
 
         setLoading(false);
-    }, [getArchives, getArchivesByDivision, getDocuments, getUserDivision, isAdmin, limitQuery, orderByQuery]);
+    }, [
+        getArchives,
+        getArchivesByDivision,
+        getDocuments,
+        isAdmin,
+        limitQuery,
+        orderByQuery,
+        scopedDivision,
+        whereQuery
+    ]);
 
     // Fetch archives based on role
     useEffect(() => {
@@ -110,13 +143,24 @@ const Reports = () => {
                         Laporan & Statistik
                     </h1>
                     <p className="text-slate-500 text-sm md:text-base mt-1">
-                        {isAdmin()
-                            ? 'Analisis data penggunaan arsip digital (Semua Divisi)'
-                            : `Analisis data penggunaan arsip digital (Divisi: ${getUserDivision() || 'N/A'})`
-                        }
+                        {scopedDivision
+                            ? `Analisis data penggunaan arsip digital (Divisi: ${scopedDivision})`
+                            : 'Analisis data penggunaan arsip digital (Semua Divisi)'}
                     </p>
                 </div>
                 <div className="flex items-center gap-3 w-full sm:w-auto">
+                    {isAdmin() && (
+                        <select
+                            value={selectedDivision}
+                            onChange={(e) => setSelectedDivision(e.target.value)}
+                            className="w-full sm:w-auto rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                        >
+                            <option value="">Semua Divisi</option>
+                            {divisions.map((division) => (
+                                <option key={division.id} value={division.name}>{division.name}</option>
+                            ))}
+                        </select>
+                    )}
                     <button
                         onClick={handleExport}
                         className="w-full sm:w-auto bg-primary hover:bg-blue-700 text-white flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg shadow-primary/20"

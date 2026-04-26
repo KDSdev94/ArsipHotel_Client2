@@ -1,6 +1,7 @@
 import React from 'react';
+import { isSuperAdminProfile, USER_ACCOUNT_STATUS } from '../../../utils/accessControl';
 
-const TabelPengguna = ({ users = [], totalCount = 0, onEdit, onDelete }) => {
+const TabelPengguna = ({ users = [], totalCount = 0, onEdit, onDelete, canManageUser = () => true }) => {
     return (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
@@ -26,7 +27,12 @@ const TabelPengguna = ({ users = [], totalCount = 0, onEdit, onDelete }) => {
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-sm font-black text-slate-800 dark:text-white truncate uppercase tracking-tight">{user.name}</p>
-                                                <p className="text-xs font-medium text-slate-400 truncate">{user.email}</p>
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300 shrink-0">
+                                                        {user.employeeId || '-'}
+                                                    </span>
+                                                    <p className="text-xs font-medium text-slate-400 truncate">{user.email}</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -38,6 +44,11 @@ const TabelPengguna = ({ users = [], totalCount = 0, onEdit, onDelete }) => {
                                                 }`}>
                                                 {user.role || 'Staf'}
                                             </span>
+                                            {isSuperAdminProfile(user) && (
+                                                <span className="inline-flex px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest w-fit bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+                                                    Super Admin
+                                                </span>
+                                            )}
                                         </div>
                                     </td>
                                     <td className="px-8 py-4">
@@ -48,25 +59,34 @@ const TabelPengguna = ({ users = [], totalCount = 0, onEdit, onDelete }) => {
                                     </td>
                                     <td className="px-8 py-4">
                                         <div className="flex justify-center">
-                                            <div className="flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-full border border-green-100 dark:border-green-800/50">
-                                                <div className="size-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                                                <span className="text-[10px] font-black uppercase tracking-widest">Aktif</span>
-                                            </div>
+                                            {user.accountStatus === USER_ACCOUNT_STATUS.SUSPENDED ? (
+                                                <div className="flex items-center gap-2 px-3 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-full border border-amber-100 dark:border-amber-800/50">
+                                                    <div className="size-1.5 bg-amber-500 rounded-full"></div>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">Nonaktif</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-full border border-green-100 dark:border-green-800/50">
+                                                    <div className="size-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">Aktif</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </td>
                                     <td className="px-8 py-4 text-center">
                                         <div className="flex items-center justify-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => onEdit(user)}
-                                                className="size-9 rounded-lg flex items-center justify-center text-slate-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-primary transition-all"
-                                                title="Edit"
+                                                disabled={!canManageUser(user)}
+                                                className="size-9 rounded-lg flex items-center justify-center text-slate-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                                title={canManageUser(user) ? 'Edit' : 'Hanya Super Admin yang bisa mengelola admin'}
                                             >
                                                 <span className="material-symbols-outlined text-[18px]">edit_square</span>
                                             </button>
                                             <button
-                                                onClick={() => onDelete(user.id)}
-                                                className="size-9 rounded-lg flex items-center justify-center text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all"
-                                                title="Delete"
+                                                onClick={() => onDelete(user)}
+                                                disabled={!canManageUser(user)}
+                                                className="size-9 rounded-lg flex items-center justify-center text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                                title={canManageUser(user) ? 'Delete' : 'Hanya Super Admin yang bisa mengelola admin'}
                                             >
                                                 <span className="material-symbols-outlined text-[18px]">delete</span>
                                             </button>

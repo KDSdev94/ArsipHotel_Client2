@@ -5,19 +5,18 @@
 // ============================================
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { useUserProfile } from '../contexts/UserProfileContext';
 import { useFirestore } from '../contexts/FirestoreContext';
 import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/layout/Layout';
+import { resolveActivityDivisionScope } from '../utils/accessControl';
 
 const Trash = () => {
-    const navigate = useNavigate();
     const { currentUser } = useAuth();
     const { getDeletedArchives, restoreArchive, deleteArchive } = useSupabase();
-    const { isAdmin, getUserDivision } = useUserProfile();
-    const { logActivity, getDocument, deleteDocumentBySupabaseId } = useFirestore();
+    const { isAdmin, getUserDivision, userProfile } = useUserProfile();
+    const { logActivity, deleteDocumentBySupabaseId } = useFirestore();
     const [archives, setArchives] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -38,7 +37,12 @@ const Trash = () => {
     }, [getDeletedArchives, getUserDivision, isAdmin]);
 
     useEffect(() => {
-        fetchDeletedArchives();
+        const initFetch = async () => {
+            await Promise.resolve();
+            fetchDeletedArchives();
+        };
+
+        initFetch();
     }, [fetchDeletedArchives]);
 
     const handleRestore = async (id) => {
@@ -53,7 +57,12 @@ const Trash = () => {
                     action: 'Memulihkan Arsip',
                     documentName: archive?.judul || 'Dokumen',
                     status: 'Berhasil',
-                    type: 'restore'
+                    type: 'restore',
+                    actorDivision: getUserDivision(),
+                    divisionScope: resolveActivityDivisionScope({
+                        archiveDivision: archive?.divisi,
+                        profile: userProfile
+                    })
                 });
 
                 alert("Arsip berhasil dipulihkan!");
@@ -79,7 +88,12 @@ const Trash = () => {
                     action: 'Menghapus Permanen',
                     documentName: archive?.judul || 'Dokumen',
                     status: 'Berhasil',
-                    type: 'permanent_delete'
+                    type: 'permanent_delete',
+                    actorDivision: getUserDivision(),
+                    divisionScope: resolveActivityDivisionScope({
+                        archiveDivision: archive?.divisi,
+                        profile: userProfile
+                    })
                 });
 
                 alert("Arsip dihapus secara permanen!");

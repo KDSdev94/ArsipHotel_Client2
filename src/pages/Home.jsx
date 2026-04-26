@@ -14,7 +14,7 @@ import Layout from '../components/layout/Layout';
 const Home = () => {
     const location = useLocation();
     const { getArchives, getArchivesByDivision } = useSupabase();
-    const { isAdmin, getUserDivision } = useUserProfile();
+    const { isAdmin, getUserDivision, getVisibleDivisions } = useUserProfile();
     const { getDocuments } = useFirestore();
     const [archives, setArchives] = useState([]);
     const [divisions, setDivisions] = useState([]);
@@ -45,10 +45,10 @@ const Home = () => {
 
         // Ambil Divisi
         const divResult = await getDocuments('divisions');
-        if (divResult.success) setDivisions(divResult.data);
+        if (divResult.success) setDivisions(getVisibleDivisions(divResult.data));
 
         setLoading(false);
-    }, [getArchives, getArchivesByDivision, getDocuments, getUserDivision, isAdmin]);
+    }, [getArchives, getArchivesByDivision, getDocuments, getUserDivision, getVisibleDivisions, isAdmin]);
 
     useEffect(() => {
         const initFetch = async () => {

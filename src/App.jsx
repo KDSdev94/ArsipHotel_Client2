@@ -25,6 +25,8 @@ import Profile from './pages/Profile'; // Halaman profil pengguna
 import PreviewArsip from './pages/PreviewArsip'; // Halaman pratinjau dokumen
 import Trash from './pages/Trash'; // Halaman tempat sampah
 
+import ProtectedRoute from './components/auth/ProtectedRoute';
+
 import './App.css'; // File CSS khusus buat styling App
 
 // ============================================
@@ -51,39 +53,42 @@ function App() {
 
 
         {/* ========== ROUTE DASHBOARD ========== */}
+        <Route element={<ProtectedRoute />}>
+          {/* Route Home - Dashboard utama setelah login */}
+          <Route path="/home" element={<Home />} />
 
-        {/* Route Home - Dashboard utama setelah login */}
-        <Route path="/home" element={<Home />} />
+          {/* Route Daftar Arsip - Halaman lihat semua arsip/dokumen */}
+          <Route path="/daftar-arsip" element={<DaftarArsip />} />
 
-        {/* Route Daftar Arsip - Halaman lihat semua arsip/dokumen */}
-        <Route path="/daftar-arsip" element={<DaftarArsip />} />
+          {/* Route Upload - Halaman buat upload dokumen hotel */}
+          <Route path="/upload" element={<UploadDocument />} />
 
-        {/* Route Upload - Halaman buat upload dokumen hotel */}
-        <Route path="/upload" element={<UploadDocument />} />
+          {/* Route Ganti Password - Ubah kredensial user */}
+          <Route path="/ganti-password" element={<GantiPassword />} />
 
-        {/* Route Divisi - Kelola divisi hotel (Back Office, Housekeeping, dll) */}
-        <Route path="/divisi" element={<Divisi />} />
+          {/* Route Reports - Lihat laporan dan statistik */}
+          <Route path="/reports" element={<Reports />} />
 
-        {/* Route Kategori - Kelola kategori arsip */}
-        <Route path="/kategori" element={<Kategori />} />
+          {/* Route Profile - Lihat dan edit profil user */}
+          <Route path="/profile" element={<Profile />} />
 
-        {/* Route Users - Kelola data karyawan */}
-        <Route path="/users" element={<Users />} />
+          {/* Route Preview - Lihat detail dan pratinjau arsip */}
+          <Route path="/preview/:id" element={<PreviewArsip />} />
 
-        {/* Route Ganti Password - Ubah kredensial user */}
-        <Route path="/ganti-password" element={<GantiPassword />} />
+          {/* Route Trash - Lihat arsip yang dihapus */}
+          <Route path="/trash" element={<Trash />} />
+        </Route>
 
-        {/* Route Reports - Lihat laporan dan statistik */}
-        <Route path="/reports" element={<Reports />} />
+        <Route element={<ProtectedRoute requireAdmin={true} />}>
+          {/* Route Divisi - Kelola divisi hotel (Back Office, Housekeeping, dll) */}
+          <Route path="/divisi" element={<Divisi />} />
 
-        {/* Route Profile - Lihat dan edit profil user */}
-        <Route path="/profile" element={<Profile />} />
+          {/* Route Kategori - Kelola kategori arsip */}
+          <Route path="/kategori" element={<Kategori />} />
 
-        {/* Route Preview - Lihat detail dan pratinjau arsip */}
-        <Route path="/preview/:id" element={<PreviewArsip />} />
-
-        {/* Route Trash - Lihat arsip yang dihapus */}
-        <Route path="/trash" element={<Trash />} />
+          {/* Route Users - Kelola data karyawan */}
+          <Route path="/users" element={<Users />} />
+        </Route>
 
 
         {/* ========== DEFAULT ROUTE ========== */}

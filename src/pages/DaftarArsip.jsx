@@ -11,21 +11,34 @@ import { useUserProfile } from '../contexts/UserProfileContext';
 import { useFirestore } from '../contexts/FirestoreContext';
 import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/layout/Layout';
+import { resolveActivityDivisionScope } from '../utils/accessControl';
 
 const DaftarArsip = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { currentUser } = useAuth();
     const { getArchives, getArchivesByDivision, softDeleteArchive } = useSupabase();
-    const { isAdmin, getUserDivision } = useUserProfile();
-    const { logActivity, getDocument } = useFirestore();
+    const { isAdmin, getUserDivision, getVisibleDivisions, userProfile } = useUserProfile();
+    const { logActivity, getDocument, getDocuments } = useFirestore();
     const [archives, setArchives] = useState([]);
+    const [divisions, setDivisions] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // ... (rest of states)
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDivisi, setSelectedDivisi] = useState('');
     const [selectedDate, setSelectedDate] = useState('');
+
+    useEffect(() => {
+        const fetchDivisions = async () => {
+            const result = await getDocuments('divisions');
+            if (result.success) {
+                setDivisions(getVisibleDivisions(result.data));
+            }
+        };
+
+        fetchDivisions();
+    }, [getDocuments, getVisibleDivisions]);
 
     // Fetch data from Supabase with role-based filtering
     const fetchArchives = React.useCallback(async () => {
@@ -89,7 +102,12 @@ const DaftarArsip = () => {
                     action: 'Memindahkan ke Sampah',
                     documentName: archiveToDelete?.judul || 'Dokumen',
                     status: 'Berhasil',
-                    type: 'delete'
+                    type: 'delete',
+                    actorDivision: getUserDivision(),
+                    divisionScope: resolveActivityDivisionScope({
+                        archiveDivision: archiveToDelete?.divisi,
+                        profile: userProfile
+                    })
                 });
 
                 alert("Arsip dipindahkan ke tempat sampah!");
@@ -158,12 +176,12 @@ const DaftarArsip = () => {
                             id="divisi"
                             value={selectedDivisi}
                             onChange={(e) => setSelectedDivisi(e.target.value)}
+                            disabled={!isAdmin()}
                         >
                             <option value="">Semua Divisi</option>
-                            <option value="Finance">Finance</option>
-                            <option value="HRD">Human Resource</option>
-                            <option value="Operations">Operations</option>
-                            <option value="IT">IT & Security</option>
+                            {divisions.map((division) => (
+                                <option key={division.id} value={division.name}>{division.name}</option>
+                            ))}
                         </select>
                     </div>
 

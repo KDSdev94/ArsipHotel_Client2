@@ -101,6 +101,23 @@ export const SupabaseProvider = ({ children }) => {
         }
     };
 
+    const getArchiveById = async (id) => {
+        try {
+            const { data, error } = await supabase
+                .from('archives')
+                .select('*')
+                .eq('id', id)
+                .or('is_deleted.is.null,is_deleted.eq.false')
+                .maybeSingle();
+
+            if (error) throw error;
+            return { success: true, data };
+        } catch (error) {
+            console.error('Error getting archive by id:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
     const getDeletedArchives = async (division = null) => {
         try {
             let query = supabase
@@ -241,6 +258,7 @@ export const SupabaseProvider = ({ children }) => {
         addArchive,
         getArchives,
         getArchivesByDivision,
+        getArchiveById,
         getDeletedArchives,
         updateArchive,
         softDeleteArchive,

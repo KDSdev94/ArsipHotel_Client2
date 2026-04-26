@@ -9,11 +9,12 @@ import { useFirestore } from '../../contexts/FirestoreContext';
 import { useSupabase } from '../../contexts/SupabaseContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserProfile } from '../../contexts/UserProfileContext';
+import { resolveActivityDivisionScope } from '../../utils/accessControl';
 
 const DocumentMetadataForm = ({ file, onProgress }) => {
     const navigate = useNavigate();
     const { currentUser } = useAuth();
-    const { isAdmin, getUserDivision } = useUserProfile();
+    const { isAdmin, getUserDivision, userProfile } = useUserProfile();
     const { getDocuments, addDocument, getDocument, logActivity } = useFirestore();
     const { uploadFile, addArchive } = useSupabase();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -127,7 +128,12 @@ const DocumentMetadataForm = ({ file, onProgress }) => {
                 action: 'Mengunggah',
                 documentName: formData.judul,
                 status: 'Berhasil',
-                type: 'upload'
+                type: 'upload',
+                actorDivision: getUserDivision(),
+                divisionScope: resolveActivityDivisionScope({
+                    archiveDivision: formData.divisi,
+                    profile: userProfile
+                })
             });
 
             if (firestoreRes.success) {

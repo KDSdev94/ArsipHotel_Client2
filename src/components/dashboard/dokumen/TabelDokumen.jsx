@@ -3,23 +3,36 @@ import { useNavigate } from 'react-router-dom';
 import { useSupabase } from '../../../contexts/SupabaseContext';
 import { useFirestore } from '../../../contexts/FirestoreContext';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useUserProfile } from '../../../contexts/UserProfileContext';
+import { resolveActivityDivisionScope } from '../../../utils/accessControl';
 
 const TabelDokumen = ({ data, loading: externalLoading, onDeleteSuccess }) => {
     const navigate = useNavigate();
     const { currentUser } = useAuth();
-    const { getArchives, softDeleteArchive } = useSupabase();
+    const { getArchives, getArchivesByDivision, softDeleteArchive } = useSupabase();
     const { logActivity, getDocument } = useFirestore();
+    const { isAdmin, getUserDivision, userProfile } = useUserProfile();
     const [internalArchives, setInternalArchives] = useState([]);
     const [internalLoading, setInternalLoading] = useState(true);
 
     const fetchArchives = React.useCallback(async () => {
         setInternalLoading(true);
-        const result = await getArchives();
+
+        let result;
+        if (isAdmin()) {
+            result = await getArchives();
+        } else {
+            const userDivision = getUserDivision();
+            result = userDivision
+                ? await getArchivesByDivision(userDivision)
+                : { success: true, data: [] };
+        }
+
         if (result.success) {
             setInternalArchives(result.data.slice(0, 5));
         }
         setInternalLoading(false);
-    }, [getArchives]);
+    }, [getArchives, getArchivesByDivision, getUserDivision, isAdmin]);
 
     useEffect(() => {
         if (!data) {
@@ -55,7 +68,12 @@ const TabelDokumen = ({ data, loading: externalLoading, onDeleteSuccess }) => {
                     action: 'Memindahkan ke Sampah',
                     documentName: archiveToDelete?.judul || 'Dokumen',
                     status: 'Berhasil',
-                    type: 'delete'
+                    type: 'delete',
+                    actorDivision: getUserDivision(),
+                    divisionScope: resolveActivityDivisionScope({
+                        archiveDivision: archiveToDelete?.divisi,
+                        profile: userProfile
+                    })
                 });
 
                 alert("Arsip dipindahkan ke tempat sampah!");

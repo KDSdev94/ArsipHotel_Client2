@@ -7,6 +7,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { useFirestore } from './FirestoreContext';
+import { canAccessDivision, getAccessibleDivisions, getUserDivisionScope, isSuperAdminProfile } from '../utils/accessControl';
 
 const UserProfileContext = createContext();
 
@@ -67,6 +68,10 @@ export const UserProfileProvider = ({ children }) => {
         return userProfile?.role === 'Admin';
     };
 
+    const isSuperAdmin = () => {
+        return isSuperAdminProfile(userProfile);
+    };
+
     // Cek apakah user adalah Staf
     const isStaf = () => {
         return userProfile?.role === 'Staf';
@@ -74,15 +79,22 @@ export const UserProfileProvider = ({ children }) => {
 
     // Get division user
     const getUserDivision = () => {
-        return userProfile?.division || 'Umum';
+        return getUserDivisionScope(userProfile) || 'Umum';
     };
+
+    const canAccessUserDivision = (division) => canAccessDivision(division, userProfile);
+
+    const getVisibleDivisions = (divisions = []) => getAccessibleDivisions(divisions, userProfile);
 
     const value = {
         userProfile,
         loading,
         isAdmin,
+        isSuperAdmin,
         isStaf,
         getUserDivision,
+        canAccessUserDivision,
+        getVisibleDivisions,
     };
 
     return (

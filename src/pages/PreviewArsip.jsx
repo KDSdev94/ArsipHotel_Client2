@@ -4,29 +4,40 @@ import { useSupabase } from '../contexts/SupabaseContext';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import { useFirestore } from '../contexts/FirestoreContext';
+import { useUserProfile } from '../contexts/UserProfileContext';
+import { canAccessDivision, resolveActivityDivisionScope } from '../utils/accessControl';
 
 const PreviewArsip = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { getArchives, softDeleteArchive } = useSupabase();
+    const { getArchiveById, softDeleteArchive } = useSupabase();
     const { currentUser } = useAuth();
-    const { deleteDocumentBySupabaseId, logActivity, getDocument } = useFirestore(); // Tambah Firestore context
+    const { userProfile, getUserDivision } = useUserProfile();
+    const { logActivity, getDocument } = useFirestore();
     const [arsip, setArsip] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showDetails, setShowDetails] = useState(false);
+    const [accessDenied, setAccessDenied] = useState(false);
 
     useEffect(() => {
         const fetchArsip = async () => {
             setLoading(true);
-            const result = await getArchives();
-            if (result.success) {
-                const found = result.data.find(item => item.id == id);
-                setArsip(found);
+            const result = await getArchiveById(id);
+            if (result.success && result.data) {
+                if (!canAccessDivision(result.data.divisi, userProfile)) {
+                    setAccessDenied(true);
+                    setArsip(null);
+                } else {
+                    setAccessDenied(false);
+                    setArsip(result.data);
+                }
+            } else {
+                setArsip(null);
             }
             setLoading(false);
         };
         fetchArsip();
-    }, [id, getArchives]);
+    }, [getArchiveById, id, userProfile]);
 
     const handleDelete = async () => {
         if (window.confirm("Apakah Anda yakin ingin memindahkan arsip ini ke tempat sampah?")) {
@@ -48,7 +59,12 @@ const PreviewArsip = () => {
                     action: 'Memindahkan ke Sampah',
                     documentName: arsip.judul || 'Dokumen',
                     status: 'Berhasil',
-                    type: 'delete'
+                    type: 'delete',
+                    actorDivision: getUserDivision(),
+                    divisionScope: resolveActivityDivisionScope({
+                        archiveDivision: arsip?.divisi,
+                        profile: userProfile
+                    })
                 });
 
                 alert("Arsip dipindahkan ke tempat sampah!");
@@ -63,6 +79,20 @@ const PreviewArsip = () => {
         return (
             <div className="flex h-screen items-center justify-center bg-background-light dark:bg-background-dark">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    if (accessDenied) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-background-light dark:bg-background-dark text-slate-800 dark:text-white">
+                <div className="text-center max-w-md px-6">
+                    <h1 className="text-2xl font-bold mb-4">Akses ditolak</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+                        Dokumen ini milik divisi lain, jadi tidak bisa dibuka dari akun Anda.
+                    </p>
+                    <button onClick={() => navigate('/home')} className="text-primary hover:underline font-bold">Kembali ke Beranda</button>
+                </div>
             </div>
         );
     }
